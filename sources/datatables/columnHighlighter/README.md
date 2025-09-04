@@ -90,5 +90,3 @@ If you prefer to attach rules in code instead of options:
 - `final-js-simple.html` — JavaScript data, simple rule
 - `final-js-and.html` — JavaScript data, AND group
 - `final-js-advanced.html` — JavaScript data, responsive demo with multiple rules, fail targets, styles
-
-Copy these and open in a browser; no build tools required.
