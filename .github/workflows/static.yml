@@ -1,0 +1,53 @@
+name: Build & Deploy GitHub Pages (static site)
+
+on:
+  push:
+    branches: [ master ]   # or main – match your default branch
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Mirror raw sources into the published site so examples can import them
+      - name: Sync sources -> docs/sources
+        run: |
+          set -e
+          SITE_DIR="docs"
+          SRC_DIR="sources"
+          mkdir -p "$SITE_DIR"
+          if [ -d "$SRC_DIR" ]; then
+            mkdir -p "$SITE_DIR/sources"
+            rsync -av --delete "$SRC_DIR/" "$SITE_DIR/sources/"
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact (docs only)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs   # <<< publish only the site folder
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
