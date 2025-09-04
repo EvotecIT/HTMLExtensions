@@ -1,0 +1,55 @@
+﻿name: Build & Deploy GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # If you already keep your HTML examples in /docs, we just mirror /sources there.
+      - name: Sync sources -> docs/sources
+        run: |
+          set -e
+          SITE_DIR="docs"
+          SRC_DIR="sources"
+          mkdir -p "$SITE_DIR"
+          if [ -d "$SRC_DIR" ]; then
+            mkdir -p "$SITE_DIR/sources"
+            rsync -av --delete "$SRC_DIR/" "$SITE_DIR/sources/"
+          else
+            echo "No /sources directory found. Skipping sync."
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact (docs)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
