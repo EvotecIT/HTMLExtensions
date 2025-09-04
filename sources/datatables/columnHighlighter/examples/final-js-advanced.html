@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>DataTables Column Highlighter — JS Advanced</title>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+        <script src="../datatables.columnHighlighter.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 10px;
+            }
+
+            .narrow {
+                max-width: 520px;
+                margin: 0 auto;
+            }
+        </style>
+        <script>
+            $(function () {
+                var data = [
+                    { Name: '1Password', NPM: 17984, Product: '1Password', Company: '1Password', CPU: 12.5, StartTime: '2025-08-24 06:40:00', HasExited: false },
+                    { Name: 'Chrome', NPM: 5000, Product: 'Google Chrome', Company: 'Google', CPU: 3.0, StartTime: '2025-08-24 06:50:00', HasExited: true },
+                    { Name: 'Firefox', NPM: 8000, Product: 'Mozilla Firefox', Company: 'Mozilla', CPU: 25.0, StartTime: '2025-08-23 15:10:00', HasExited: false },
+                    { Name: '1Password', NPM: 100, Product: '1Password', Company: '1Password', CPU: 0.5, StartTime: '2025-08-22 01:00:00', HasExited: true }
+                ];
+                $('#demoJsAdvanced').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    data: data,
+                    columns: [
+                        { data: 'Name', title: 'Name' },
+                        { data: 'NPM', title: 'NPM' },
+                        { data: 'Product', title: 'Product' },
+                        { data: 'Company', title: 'Company' },
+                        { data: 'CPU', title: 'CPU' },
+                        { data: 'StartTime', title: 'StartTime' },
+                        { data: 'HasExited', title: 'HasExited' }
+                    ],
+                    columnHighlighter: {
+                        rules: [
+                            {
+                                conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Name', operator: 'eq', type: 'string', value: '1Password' }] }],
+                                targets: [{ column: 'Name', css: { 'background-color': '#fa8072', color: '#000' } }],
+                                failTargets: [{ column: 'Name', css: { 'background-color': '#f5f5f5', color: '#666', 'text-decoration': 'underline' } }]
+                            },
+                            {
+                                conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'CPU', operator: 'gt', type: 'number', value: 10 }] }],
+                                targets: [{ column: 'CPU', css: { 'background-color': '#fff3cd', color: '#856404', 'font-weight': 'bold', 'border': '1px solid #ffecb5' } }]
+                            },
+                            {
+                                conditionsContainer: [{ logic: 'OR', conditions: [{ columnName: 'Product', operator: 'eq', type: 'string', value: '1Password' }, { columnName: 'Company', operator: 'eq', type: 'string', value: '1Password' }] }],
+                                targets: [{ column: 'Product', css: { 'background-color': '#d1e7dd', color: '#0f5132', 'font-style': 'italic' } }, { column: 'Company', css: { 'background-color': '#d1e7dd', color: '#0f5132', 'font-style': 'italic' } }]
+                            },
+                            {
+                                conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'StartTime', operator: 'gt', type: 'date', valueDate: { year: 2025, month: 8, day: 24, hours: 0, minutes: 0, seconds: 0 }, dateTimeFormat: 'YYYY-MM-DD HH:mm:ss' }] }],
+                                targets: [{ column: 'StartTime', css: { 'background-color': '#cfe2ff', color: '#052c65' } }]
+                            },
+                            {
+                                conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'HasExited', operator: 'eq', type: 'bool', value: true }] }],
+                                targets: [{ column: 'HasExited', css: { 'background-color': '#f8d7da', color: '#842029', 'text-decoration': 'line-through' } }],
+                                failTargets: [{ column: 'HasExited', css: { 'background-color': '#d1e7dd', color: '#0f5132' } }]
+                            }
+                        ]
+                    }
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <h2>JavaScript Advanced (Responsive + Multiple Conditions)</h2>
+        <div class="narrow">
+            <table id="demoJsAdvanced" class="display compact" style="width:100%"></table>
+        </div>
+    </body>
+
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>DataTables Column Highlighter — JS AND</title>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+        <script src="../datatables.columnHighlighter.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 10px;
+            }
+        </style>
+        <script>
+            $(function () {
+                var data = [
+                    { Name: '1Password', NPM: 17984, Product: '1Password' },
+                    { Name: '1Password', NPM: 12345, Product: '1Password' },
+                    { Name: 'Chrome', NPM: 17984, Product: 'Google Chrome' }
+                ];
+                $('#demoJsAND').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    data: data,
+                    columns: [
+                        { data: 'Name', title: 'Name' },
+                        { data: 'NPM', title: 'NPM' },
+                        { data: 'Product', title: 'Product' }
+                    ],
+                    columnHighlighter: {
+                        rules: [
+                            {
+                                conditionsContainer: [
+                                    {
+                                        logic: 'AND', conditions: [
+                                            { columnName: 'Name', operator: 'eq', type: 'string', value: '1Password' },
+                                            { columnName: 'NPM', operator: 'eq', type: 'number', value: 17984 }
+                                        ]
+                                    }
+                                ],
+                                targets: [
+                                    { column: 'Name', css: { 'background-color': '#fa8072', color: '#000' } },
+                                    { column: 'NPM', css: { 'background-color': '#fa8072', color: '#000' } }
+                                ]
+                            }
+                        ]
+                    }
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <h2>JavaScript AND (Name == 1Password AND NPM == 17984)</h2>
+        <table id="demoJsAND" class="display compact" style="width:100%"></table>
+    </body>
+
+</html>
