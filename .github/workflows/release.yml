@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version (e.g. 0.1.0)"
+        description: "Version (e.g. 0.1.1)"
         required: true
         type: string
 
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ inputs.version }}
-      BRANCH: master   # <-- change to main if that's your default
+      BRANCH: master   # change to main if needed
 
     steps:
       - name: Checkout
@@ -29,6 +29,7 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+          scope: "@evotecit"
 
       - name: Install terser
         run: npm i -D terser
@@ -48,8 +49,6 @@ jobs:
         run: |
           if [ -f package.json ]; then
             node -e "let f='package.json',p=require('./'+f);p.version=process.env.VERSION;require('fs').writeFileSync(f, JSON.stringify(p,null,2)+'\n')"
-          else
-            echo "No package.json found; skipping version bump."
           fi
 
       - name: Commit dist (and package.json if changed)
@@ -60,16 +59,13 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "chore(release): dist for v$VERSION"
             git push origin HEAD:$BRANCH
-          else
-            echo "No changes to commit."
           fi
 
       - name: Create tag (skip if exists)
         run: |
-          set -e
           TAG="v$VERSION"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists; skipping tag creation."
+            echo "Tag $TAG exists; skipping."
           else
             git tag -a "$TAG" -m "HTMLExtensions $TAG"
             git push origin "$TAG"
@@ -90,9 +86,9 @@ jobs:
         run: |
           if [ -n "$NODE_AUTH_TOKEN" ]; then
             if [ -f package.json ]; then
-              npm publish --access public
+              npm publish --access public || echo "npm publish failed; continuing."
             else
-              echo "package.json missing; cannot publish to npm." && exit 1
+              echo "package.json missing; skipping npm publish."
             fi
           else
             echo "NPM_TOKEN not set — skipping npm publish."
