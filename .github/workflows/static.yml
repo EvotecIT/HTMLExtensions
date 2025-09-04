@@ -2,7 +2,7 @@ name: Build & Deploy GitHub Pages (static site)
 
 on:
   push:
-    branches: [ master ]   # or main – match your default branch
+    branches: [ master ]   # or main match your default branch
   workflow_dispatch:
 
 permissions:

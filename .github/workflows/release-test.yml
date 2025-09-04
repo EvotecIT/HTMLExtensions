@@ -1,0 +1,81 @@
+name: "Release: build dist, tag, publish"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # we will create a tag
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install terser
+        run: npm i -D terser
+
+      - name: Build dist
+        run: |
+          set -e
+          mkdir -p dist
+          npx terser \
+            sources/datatables/columnHighlighter/datatables.columnHighlighter.js \
+            --compress --mangle \
+            --comments=/^!/ \
+            -o dist/datatables.columnHighlighter.min.js
+          # include the original for debugging via CDN if desired
+          cp sources/datatables/columnHighlighter/datatables.columnHighlighter.js dist/
+
+      # Optional: bump package.json version to match the input
+      - name: Bump package.json version
+        if: ${{ hashFiles('package.json') != '' }}
+        run: |
+          NEW_VER="${{ inputs.version }}"
+          node -e "let p=require('./package.json'); p.version='${NEW_VER}'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2)+ '\n')"
+
+      - name: Commit dist (and package.json if present)
+        run: |
+          git config user.name  "evotec-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add dist/ package.json || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(release): build dist for v${{ inputs.version }}"
+            git push origin HEAD:master
+          fi
+
+      - name: Create tag
+        run: |
+          TAG="v${{ inputs.version }}"
+          git tag -a "$TAG" -m "HTMLExtensions $TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: v${{ inputs.version }}
+          files: |
+            dist/datatables.columnHighlighter.min.js
+            dist/datatables.columnHighlighter.js
+
+      # Optional: publish to npm (requires repo root package.json and secret)
+      - name: Publish to npm
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
