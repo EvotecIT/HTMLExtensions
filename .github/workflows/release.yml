@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version (e.g. 0.1.0)'
+        description: "Version (e.g. 0.1.0)"
         required: true
         type: string
 
@@ -14,17 +14,21 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      BRANCH: master   # <-- change to main if that's your default
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # we will create a tag
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install terser
         run: npm i -D terser
@@ -38,31 +42,38 @@ jobs:
             --compress --mangle \
             --comments=/^!/ \
             -o dist/datatables.columnHighlighter.min.js
-          # include the original for debugging via CDN if desired
           cp sources/datatables/columnHighlighter/datatables.columnHighlighter.js dist/
 
-      # Optional: bump package.json version to match the input
-      - name: Bump package.json version
-        if: ${{ hashFiles('package.json') != '' }}
+      - name: Bump package.json version (if present)
         run: |
-          NEW_VER="${{ inputs.version }}"
-          node -e "let p=require('./package.json'); p.version='${NEW_VER}'; require('fs').writeFileSync('package.json', JSON.stringify(p, null, 2)+ '\n')"
+          if [ -f package.json ]; then
+            node -e "let f='package.json',p=require('./'+f);p.version=process.env.VERSION;require('fs').writeFileSync(f, JSON.stringify(p,null,2)+'\n')"
+          else
+            echo "No package.json found; skipping version bump."
+          fi
 
-      - name: Commit dist (and package.json if present)
+      - name: Commit dist (and package.json if changed)
         run: |
           git config user.name  "evotec-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add dist/ package.json || true
+          git add dist/ package.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
-            git commit -m "chore(release): build dist for v${{ inputs.version }}"
-            git push origin HEAD:master
+            git commit -m "chore(release): dist for v$VERSION"
+            git push origin HEAD:$BRANCH
+          else
+            echo "No changes to commit."
           fi
 
-      - name: Create tag
+      - name: Create tag (skip if exists)
         run: |
-          TAG="v${{ inputs.version }}"
-          git tag -a "$TAG" -m "HTMLExtensions $TAG"
-          git push origin "$TAG"
+          set -e
+          TAG="v$VERSION"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists; skipping tag creation."
+          else
+            git tag -a "$TAG" -m "HTMLExtensions $TAG"
+            git push origin "$TAG"
+          fi
 
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
@@ -73,9 +84,16 @@ jobs:
             dist/datatables.columnHighlighter.min.js
             dist/datatables.columnHighlighter.js
 
-      # Optional: publish to npm (requires repo root package.json and secret)
-      - name: Publish to npm
-        if: ${{ secrets.NPM_TOKEN != '' }}
-        run: npm publish --access public
+      - name: Publish to npm (only if token present)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            if [ -f package.json ]; then
+              npm publish --access public
+            else
+              echo "package.json missing; cannot publish to npm." && exit 1
+            fi
+          else
+            echo "NPM_TOKEN not set — skipping npm publish."
+          fi
