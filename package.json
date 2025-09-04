@@ -1,0 +1,10 @@
+﻿{
+  "name": "@evotec/htmlextensions",
+  "version": "0.0.0",
+  "description": "Tiny JS/CSS extensions (DataTables, ApexCharts, etc.)",
+  "files": ["dist"],
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/EvotecIT/HTMLExtensions.git" },
+  "homepage": "https://htmlextensions.evotec.xyz",
+  "keywords": ["datatables", "apexcharts", "extensions", "highlight", "ui"]
+}
