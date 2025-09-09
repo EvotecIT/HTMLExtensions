@@ -7,11 +7,19 @@
         <title>DataTables Column Highlighter — JS Advanced</title>
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
         <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+        <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+        <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
+        <link rel="stylesheet" href="../assets/site.css" />
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
         <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
         <script src="../../sources/datatables/columnHighlighter/datatables.columnHighlighter.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -22,6 +30,9 @@
                 max-width: 520px;
                 margin: 0 auto;
             }
+            .example-notes { margin-top: 18px; }
+            .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+            pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
         </style>
         <script>
             $(function () {
@@ -75,11 +86,57 @@
     </head>
 
     <body>
-        <nav style="margin: 12px 0"><a href="../index.html">← Back to examples</a></nav>
+        <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/main/sources/datatables/columnHighlighter/README.md"></script>
         <h2>JavaScript Advanced (Responsive + Multiple Conditions)</h2>
         <div class="narrow">
             <table id="demoJsAdvanced" class="display compact" style="width:100%"></table>
         </div>
+
+        <section class="example-notes">
+            <h3>About this example</h3>
+            <p>Multiple rules on a JavaScript data source:</p>
+            <ul>
+                <li>Name equals 1Password — pass/fail styles.</li>
+                <li>CPU greater than 10 — numeric highlight.</li>
+                <li>Product OR Company equals 1Password — OR logic.</li>
+                <li>StartTime after threshold — date compare.</li>
+                <li>HasExited is true — boolean with pass/fail styles.</li>
+            </ul>
+
+            <h3>Configuration</h3>
+<pre><code class="language-js">columnHighlighter: {
+  rules: [
+    {
+      conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Name', operator: 'eq', type: 'string', value: '1Password' }] }],
+      targets: [{ column: 'Name', css: { 'background-color': '#fa8072', color: '#000' } }],
+      failTargets: [{ column: 'Name', css: { 'background-color': '#f5f5f5', color: '#666', 'text-decoration': 'underline' } }]
+    },
+    {
+      conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'CPU', operator: 'gt', type: 'number', value: 10 }] }],
+      targets: [{ column: 'CPU', css: { 'background-color': '#fff3cd', color: '#856404', 'font-weight': 'bold', 'border': '1px solid #ffecb5' } }]
+    },
+    {
+      conditionsContainer: [{ logic: 'OR', conditions: [
+        { columnName: 'Product', operator: 'eq', type: 'string', value: '1Password' },
+        { columnName: 'Company', operator: 'eq', type: 'string', value: '1Password' }
+      ] }],
+      targets: [
+        { column: 'Product', css: { 'background-color': '#d1e7dd', color: '#0f5132', 'font-style': 'italic' } },
+        { column: 'Company', css: { 'background-color': '#d1e7dd', color: '#0f5132', 'font-style': 'italic' } }
+      ]
+    },
+    {
+      conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'StartTime', operator: 'gt', type: 'date', valueDate: { year: 2025, month: 8, day: 24, hours: 0, minutes: 0, seconds: 0 }, dateTimeFormat: 'YYYY-MM-DD HH:mm:ss' }] }],
+      targets: [{ column: 'StartTime', css: { 'background-color': '#cfe2ff', color: '#052c65' } }]
+    },
+    {
+      conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'HasExited', operator: 'eq', type: 'bool', value: true }] }],
+      targets: [{ column: 'HasExited', css: { 'background-color': '#f8d7da', color: '#842029', 'text-decoration': 'line-through' } }],
+      failTargets: [{ column: 'HasExited', css: { 'background-color': '#d1e7dd', color: '#0f5132' } }]
+    }
+  ]
+}</code></pre>
+        </section>
     </body>
 
 </html>

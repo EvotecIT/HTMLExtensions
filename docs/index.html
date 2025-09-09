@@ -4,24 +4,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>HTMLExtensions — Examples Index</title>
+    <link rel="stylesheet" href="assets/site.css" />
     <style>
-      :root { color-scheme: light dark; }
+      :root { color-scheme: light; }
       body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 24px; line-height: 1.5; }
       header { margin-bottom: 16px; }
       h1 { font-size: 1.6rem; margin: 0 0 4px; }
       p { margin: 0 0 16px; }
       .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-      .card { border: 1px solid rgba(0,0,0,.15); border-radius: 8px; padding: 12px 14px; }
+      .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
       .card h2 { margin: 0 0 6px; font-size: 1.1rem; }
       .card ul { margin: 0; padding-left: 18px; }
       .card a { text-decoration: none; }
-      footer { margin-top: 24px; font-size: .9rem; opacity: .8; }
     </style>
   </head>
   <body>
+    <script defer src="assets/site.js" data-docs-root="./" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md"></script>
     <header>
       <h1>DataTables Column Highlighter — Examples</h1>
-      <p>Select an example below. Each page includes a link back here.</p>
+      <p>This site showcases the <code>columnHighlighter</code> extension from HTMLExtensions.</p>
+      <p><a href="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md" target="_blank" rel="noopener">Column Highlighter README ↗</a></p>
     </header>
 
     <section class="grid">
@@ -42,9 +44,5 @@
         </ul>
       </div>
     </section>
-
-    <footer>
-      <span>Folder: <code>docs/</code>. Links are relative for GitHub Pages.</span>
-    </footer>
   </body>
 </html>

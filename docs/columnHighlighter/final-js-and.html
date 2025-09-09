@@ -7,15 +7,26 @@
         <title>DataTables Column Highlighter — JS AND</title>
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
         <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+        <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+        <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
+        <link rel="stylesheet" href="../assets/site.css" />
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
         <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
         <script src="../../sources/datatables/columnHighlighter/datatables.columnHighlighter.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
         <style>
             body {
                 font-family: Arial, sans-serif;
                 padding: 10px;
             }
+            .example-notes { margin-top: 18px; }
+            .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+            pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
         </style>
         <script>
             $(function () {
@@ -56,9 +67,37 @@
     </head>
 
     <body>
-        <nav style="margin: 12px 0"><a href="../index.html">← Back to examples</a></nav>
+        <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/main/sources/datatables/columnHighlighter/README.md"></script>
         <h2>JavaScript AND (Name == 1Password AND NPM == 17984)</h2>
         <table id="demoJsAND" class="display compact" style="width:100%"></table>
+
+        <section class="example-notes">
+            <h3>About this example</h3>
+            <p>
+                Two <code>AND</code> conditions must be true to highlight the <strong>Name</strong> and <strong>NPM</strong> columns.
+            </p>
+
+            <h3>Configuration</h3>
+<pre><code class="language-js">columnHighlighter: {
+  rules: [
+    {
+      conditionsContainer: [
+        {
+          logic: 'AND',
+          conditions: [
+            { columnName: 'Name', operator: 'eq', type: 'string', value: '1Password' },
+            { columnName: 'NPM', operator: 'eq', type: 'number', value: 17984 }
+          ]
+        }
+      ],
+      targets: [
+        { column: 'Name', css: { 'background-color': '#fa8072', color: '#000' } },
+        { column: 'NPM',  css: { 'background-color': '#fa8072', color: '#000' } }
+      ]
+    }
+  ]
+}</code></pre>
+        </section>
     </body>
 
 </html>

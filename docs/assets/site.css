@@ -1,0 +1,81 @@
+:root {
+  /* Default (light) theme tokens */
+  color-scheme: light;
+  --bg: #ffffff;
+  --text: #111111;
+  --muted-text: #555555;
+  --border: rgba(0,0,0,.15);
+  --card-bg: #ffffff;
+  --link: #0b5ed7;
+  --link-visited: #6f42c1;
+}
+
+html.theme-dark {
+  color-scheme: dark;
+  --bg: #0f1116;
+  --text: #e6e6e6;
+  --muted-text: #b7b7b7;
+  --border: rgba(255,255,255,.2);
+  --card-bg: #161a23;
+  --link: #69a6ff;
+  --link-visited: #caa7ff;
+}
+
+body { background: var(--bg); color: var(--text); }
+a { color: var(--link); }
+a:visited { color: var(--link-visited); }
+.site-nav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.site-nav a {
+  text-decoration: none;
+}
+.site-nav .spacer { flex: 1; }
+.theme-toggle {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.theme-toggle:hover { filter: brightness(0.98); }
+.theme-toggle:active { transform: translateY(1px); }
+.theme-toggle svg { width: 18px; height: 18px; stroke: var(--text); fill: none; stroke-width: 1.8; }
+.theme-toggle .fill { fill: var(--text); stroke: none; }
+.site-footer {
+  margin-top: 24px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  font-size: .9rem;
+  opacity: .9;
+}
+
+/* Theme selector */
+/* Remove old select styles (kept for reference, now unused) */
+
+/* Prism toolbar theming */
+.code-toolbar > .toolbar a,
+.code-toolbar > .toolbar button,
+.code-toolbar > .toolbar span {
+  color: var(--text) !important;
+}
+.code-toolbar > .toolbar a,
+.code-toolbar > .toolbar button {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+}
