@@ -1,6 +1,6 @@
 {
   "name": "@evotecit/htmlextensions",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Tiny JS/CSS extensions for libraries like DataTables and ApexCharts.",
   "files": [
     "dist"

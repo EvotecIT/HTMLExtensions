@@ -180,7 +180,31 @@
             childRow.find('.dtr-title').each(function() { var $elem = jQuery(this); var text = $elem.text().trim(); if (text === target.column) { var $dataElem = $elem.siblings('.dtr-data').length > 0 ? $elem.siblings('.dtr-data') : $elem.next(); if (target.backgroundColor) { $dataElem.css('background-color', target.backgroundColor); } if (target.textColor) { $dataElem.css('color', target.textColor); } if (target.css) { $dataElem.css(target.css); } if (target.highlightParent) { $elem.parent().css('background-color', target.backgroundColor); if (target.textColor) { $elem.parent().css('color', target.textColor); } } } });
         },
         applyVisibleCellStyling: function(tableId, $parentRow, target) {
-            try { var idx = (typeof target.column === 'number') ? target.column : headerNameToIndex(tableId, target.column); if (idx < 0) return; var $cells = $parentRow.find('td'); if ($cells.length === 0) return; var $cell = $cells.eq(idx); if ($cell && $cell.length > 0) { if (target.backgroundColor) { $cell.css('background-color', target.backgroundColor); } if (target.textColor) { $cell.css('color', target.textColor); } if (target.css) { $cell.css(target.css); } } } catch (e) { }
+            try {
+                var idx = (typeof target.column === 'number') ? target.column : headerNameToIndex(tableId, target.column);
+                if (idx < 0) return;
+                var $cells = $parentRow.find('td');
+                if ($cells.length === 0) return;
+                var $cell = $cells.eq(idx);
+                if ($cell && $cell.length > 0) {
+                    // Set foreground color first
+                    if (target.textColor) { $cell.css('color', target.textColor); }
+
+                    // Background highlight: override Bootstrap 5.3 table striped overlay (box-shadow based)
+                    if (target.backgroundColor) {
+                        // Keep the classic background-color for non-Bootstrap tables or custom themes
+                        $cell.css('background-color', target.backgroundColor);
+                        // Neutralize per-cell accent var so striped/hover overlays don’t tint our color
+                        try { $cell.css('--bs-table-accent-bg', 'transparent'); } catch (e1) { /* noop */ }
+                        // Explicitly draw the same full-cell inset overlay with our color so it stays consistent
+                        // across striped rows (Bootstrap uses this technique internally)
+                        $cell.css('box-shadow', 'inset 0 0 0 9999px ' + target.backgroundColor);
+                    }
+
+                    // Custom CSS from the rule takes final precedence
+                    if (target.css) { $cell.css(target.css); }
+                }
+            } catch (e) { }
         },
         createConfig: function(conditions, targets) { return [{ condition: conditions, targets: Array.isArray(targets) ? targets : [targets] }]; }
     };
