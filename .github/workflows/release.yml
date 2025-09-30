@@ -44,6 +44,13 @@ jobs:
             --comments=/^!/ \
             -o dist/datatables.columnHighlighter.min.js
           cp sources/datatables/columnHighlighter/datatables.columnHighlighter.js dist/
+          # Build Toggle View (helper + Buttons UMD in one bundle)
+          npx terser \
+            sources/datatables/toggleView/datatables.toggleView.js \
+            --compress --mangle \
+            --comments=/^!/ \
+            -o dist/datatables.toggleView.min.js
+          cp sources/datatables/toggleView/datatables.toggleView.js dist/
 
       - name: Bump package.json version (if present)
         run: |
@@ -79,6 +86,8 @@ jobs:
           files: |
             dist/datatables.columnHighlighter.min.js
             dist/datatables.columnHighlighter.js
+            dist/datatables.toggleView.min.js
+            dist/datatables.toggleView.js
 
       - name: Publish to npm (only if token present)
         env:
