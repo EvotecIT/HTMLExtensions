@@ -2,7 +2,6 @@
  HTMLExtensions: DataTables Responsive/ScrollX Toggle Helper
  - Preserves init options and runtime state (order, paging, searches, column visibility)
  - Rebinds ColumnHighlighter handlers if present
- - Registers a Buttons button type 'toggleView'
 */
 (function(global){
   if (global.hfxToggleView) return;
@@ -14,8 +13,10 @@
     try {
       var CH = global.DataTablesColumnHighlighter; if (!CH || !CH.configurations) return;
       var cfg = CH.configurations[tableId]; if (!cfg) return;
+      // Update bound api and rewire events
       cfg.table = api;
       if (CH.setupEventHandlers) CH.setupEventHandlers(tableId, api);
+      // Re-apply for visible rows
       setTimeout(function(){ try { api.rows({ page: 'current' }).every(function(){ var tr=this.node(); CH.applyHighlighting(tableId, (global.jQuery||global.$)(tr), this.data()); }); } catch(_){} }, 0);
     } catch(_){}
   }
@@ -52,27 +53,70 @@
     var isResponsive = !!api.settings()[0].responsive;
     var isScrollX = init && init.scrollX === true;
     var state = preserveState(api);
+
+    // Tear down instance but keep DOM intact
     api.destroy();
-    if (isResponsive){ if (!init.responsiveConfig && init.responsive) init.responsiveConfig = init.responsive; init.responsive = false; init.scrollX = true; }
-    else { init.scrollX = false; init.responsive = init.responsiveConfig || { details: { type: 'inline' } }; }
+
+    // Prepare options
+    if (isResponsive){
+      if (!init.responsiveConfig && init.responsive) init.responsiveConfig = init.responsive;
+      init.responsive = false; init.scrollX = true;
+    } else {
+      init.scrollX = false;
+      init.responsive = init.responsiveConfig || { details: { type: 'inline' } };
+    }
+
     var newApi = $(table).DataTable(init);
-    try { if (id) localStorage.setItem('hfx:dt:'+id+':mode', isResponsive ? 'ScrollX' : 'Responsive'); } catch(_){ }
+
+    // Persist mode for HtmlForgeX defaulting (if present)
+    try {
+      if (id) {
+        var key = 'hfx:dt:' + id + ':mode';
+        localStorage.setItem(key, isResponsive ? 'ScrollX' : 'Responsive');
+      }
+    } catch(_){ }
+
+    // Rebind highlighting (if present)
     if (id) rebindHighlighter(id, newApi);
+
+    // Restore state
     restoreState(newApi, state);
+
+    // Align widths / toolbar and refresh toggle button label if present
     try { if (global.hfxDt) global.hfxDt.applyViewportAndToolbar(newApi); } catch(_){ }
     try {
-      var st = newApi.settings()[0]; var isScroll = !!(st && st.oInit && st.oInit.scrollX);
+      var st = newApi.settings()[0];
+      var isScroll = !!(st && st.oInit && st.oInit.scrollX);
       var label = isScroll ? 'Switch to Responsive' : 'Switch to ScrollX';
       if (newApi.button) newApi.button('.buttons-toggle-view').text(label);
     } catch(_){ }
+
     return newApi;
   }
   global.hfxToggleView = toggle;
-  // Optional declarative button
-  try { var $ = global.jQuery || global.$; if ($ && $.fn && $.fn.on) { $(function(){ $('body').on('click','[data-hfx-toggle]', function(){ try { var sel = $(this).attr('data-hfx-toggle'); if (!sel) return; var api = $(sel).DataTable(); if (!api) return; var newApi = toggle(api) || api; var st = newApi.settings()[0]; var isScroll = !!(st && st.oInit && st.oInit.scrollX); $(this).text(isScroll ? 'Switch to Responsive' : 'Switch to ScrollX'); } catch(_){ } }); }); } } catch(_){ }
+  // Optional: declarative trigger using [data-hfx-toggle="#tableId"]
+  try {
+    var $ = global.jQuery || global.$;
+    if ($ && $.fn && $.fn.on) {
+      $(function(){
+        $('body').on('click','[data-hfx-toggle]', function(){
+          try {
+            var sel = $(this).attr('data-hfx-toggle');
+            if (!sel) return;
+            var api = $(sel).DataTable(); if (!api) return;
+            var newApi = toggle(api) || api;
+            // If the triggering element wants auto label, flip it
+            var st = newApi.settings()[0];
+            var isScroll = !!(st && st.oInit && st.oInit.scrollX);
+            $(this).text(isScroll ? 'Switch to Responsive' : 'Switch to ScrollX');
+          } catch(_){ }
+        });
+      });
+    }
+  } catch(_){ }
 })(window);
 
-// Buttons registration (UMD)
+// Buttons integration (UMD-friendly): register 'toggleView' if Buttons is present
 (function(factory){
   if (typeof define === 'function' && define.amd) {
     define(['jquery','datatables.net','datatables.net-buttons'], function($){ return factory($, window, document); });
@@ -93,4 +137,3 @@
   };
   $.extend(DataTable.ext.buttons, { toggleView: def, hfxToggleView: def });
 }));
-
