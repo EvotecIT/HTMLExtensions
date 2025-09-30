@@ -90,3 +90,15 @@ If you prefer to attach rules in code instead of options:
 - `final-js-simple.html` — JavaScript data, simple rule
 - `final-js-and.html` — JavaScript data, AND group
 - `final-js-advanced.html` — JavaScript data, responsive demo with multiple rules, fail targets, styles
+- `examples/datatables-bootstrap-striped-responsive.html` — Bootstrap `table-striped` + Responsive; shows consistent per-cell highlights
+
+### Bootstrap 5.3 striped tables
+
+Bootstrap 5.3 renders zebra striping and hover states using a full-cell `box-shadow` overlay driven by CSS variables (for example, `--bs-table-accent-bg`). If you only set `background-color` on a cell, that overlay can tint your highlight on odd rows, making it look uneven.
+
+When a `backgroundColor` is provided, the Column Highlighter now:
+
+- sets `--bs-table-accent-bg: transparent` on the target cell, and
+- paints an inset `box-shadow` with your color (`inset 0 0 0 9999px <color>`),
+
+so highlights look identical on striped and non-striped rows. Any custom `css` you pass still applies last and can override these (for example `{ 'box-shadow': 'none' }`).
