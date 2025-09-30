@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Header Name Tolerance — Prettified headers</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+  <style> body{font-family:system-ui,Arial,sans-serif;margin:16px} h1{font-size:1.2rem} </style>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+  <!-- Use source to exercise latest tolerance logic -->
+  <script src="../../sources/datatables/columnHighlighter/datatables.columnHighlighter.js"></script>
+</head>
+<body>
+  <h1>Header Name Tolerance — Prettified header mapping</h1>
+  <p>Headers are prettified (<code>Available Ports</code>, <code>LDAP</code>) but rules reference original names (<code>AvailablePorts</code>, <code>Ldap</code>).</p>
+
+  <table id="tblPretty" class="display nowrap" style="width:100%">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Available Ports</th>
+        <th>LDAP</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Node A</td><td>12</td><td>true</td></tr>
+      <tr><td>Node B</td><td>0</td><td>false</td></tr>
+      <tr><td>Node C</td><td>7</td><td>true</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    $(function(){
+      $('#tblPretty').DataTable({
+        responsive: true,
+        columnHighlighter: {
+          rules: [
+            // Map "AvailablePorts" -> header "Available Ports"
+            { conditionsContainer: [ { logic:'AND', conditions:[{ columnName:'AvailablePorts', operator:'gt', type:'number', value:0 }] } ],
+              targets: [ { column:'AvailablePorts', backgroundColor:'#cff4fc', textColor:'#055160' } ] },
+            // Map "Ldap" -> header "LDAP"
+            { conditionsContainer: [ { logic:'AND', conditions:[{ columnName:'Ldap', operator:'eq', type:'bool', value:true }] } ],
+              targets: [ { column:'Ldap', backgroundColor:'#d1e7dd', textColor:'#0f5132' } ] }
+          ]
+        }
+      });
+    });
+  </script>
+  <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md"></script>
+</body>
+</html>
+

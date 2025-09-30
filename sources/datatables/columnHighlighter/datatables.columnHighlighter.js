@@ -13,6 +13,39 @@
     if (typeof window === 'undefined') { return; }
 
     function isEmptyOrSpaces(str) { return !str || str.trim() === ''; }
+    // Normalize header/column names for tolerant matching (case/spacing/punctuation)
+    function normalizeName(input) {
+        try { return ('' + input).toLowerCase().replace(/[\s\u00A0\u202F\-_]/g, '').replace(/[^a-z0-9]/gi, ''); } catch(_) { return ''+input; }
+    }
+
+    // Parse numbers accepting both "." and "," decimal separators (and typical thousands separators)
+    function parseLocaleNumber(input) {
+        if (typeof input === 'number') return input;
+        var s = ('' + input).trim();
+        if (!s) return undefined;
+        // remove regular/narrow/nb spaces used as group separators
+        s = s.replace(/[\s\u00A0\u202F]/g, '');
+        var hasComma = s.indexOf(',') !== -1;
+        var hasDot = s.indexOf('.') !== -1;
+        if (hasComma && hasDot) {
+            // The last separator is the decimal; the other is group separator
+            if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+                // comma decimal, dot thousands
+                s = s.replace(/\./g, '');
+                s = s.replace(',', '.');
+            } else {
+                // dot decimal, comma thousands
+                s = s.replace(/,/g, '');
+            }
+        } else if (hasComma && !hasDot) {
+            // Only comma present -> treat as decimal separator
+            s = s.replace(',', '.');
+        } else {
+            // Only dot or neither -> unchanged
+        }
+        var n = Number(s);
+        return isNaN(n) ? undefined : n;
+    }
 
     function dataTablesCheckCondition(condition, data) {
         var columnName = condition['columnName'];
@@ -46,17 +79,14 @@
             if (Array.isArray(conditionValue)) {
                 var tmp = [];
                 for (var i = 0; i < conditionValue.length; i++) {
-                    if (!isEmptyOrSpaces(String(conditionValue[i]))) { tmp.push(Number(conditionValue[i])); }
-                    else { tmp.push(undefined); }
+                    var parsed = parseLocaleNumber(conditionValue[i]);
+                    tmp.push(parsed);
                 }
                 conditionValue = tmp;
-                if (!isEmptyOrSpaces(String(columnValue))) { columnValue = Number(columnValue); }
-                else { columnValue = undefined; }
+                columnValue = parseLocaleNumber(columnValue);
             } else {
-                if (!isEmptyOrSpaces(String(conditionValue))) { conditionValue = Number(conditionValue); }
-                else { conditionValue = undefined; }
-                if (!isEmptyOrSpaces(String(columnValue))) { columnValue = Number(columnValue); }
-                else { columnValue = undefined; }
+                conditionValue = parseLocaleNumber(conditionValue);
+                columnValue = parseLocaleNumber(columnValue);
             }
         } else if (condition['type'] == 'date') {
             if (Array.isArray(condition['valueDate'])) {
@@ -99,8 +129,10 @@
         var headers = getHeaderNames(tableId); if (index >= 0 && index < headers.length) { return headers[index]; } return null;
     }
     function headerNameToIndex(tableId, name) {
-        var headers = getHeaderNames(tableId); if (!name) return -1; var lname = ('' + name).toLowerCase();
-        for (var i = 0; i < headers.length; i++) { if (('' + headers[i]).toLowerCase() === lname) return i; } return -1;
+        var headers = getHeaderNames(tableId); if (!name) return -1; var lname = ('' + name).toLowerCase(); var nname = normalizeName(name);
+        for (var i = 0; i < headers.length; i++) { if (('' + headers[i]).toLowerCase() === lname) return i; }
+        for (var j = 0; j < headers.length; j++) { if (normalizeName(headers[j]) === nname) return j; }
+        return -1;
     }
 
     window.DataTablesColumnHighlighter = {
@@ -113,7 +145,9 @@
             if (!c) return c; try {
                 if (!c.dataStore) c.dataStore = store;
                 if ((c.columnId === undefined || c.columnId === -1) && c.columnName) {
-                    var lname = ('' + c.columnName).toLowerCase(); for (var h = 0; h < headers.length; h++) { if ((headers[h] + '').toLowerCase() === lname) { c.columnId = h; break; } }
+                    var lname = ('' + c.columnName).toLowerCase();
+                    for (var h = 0; h < headers.length; h++) { if ((headers[h] + '').toLowerCase() === lname) { c.columnId = h; break; } }
+                    if ((c.columnId === undefined || c.columnId === -1)) { var nname = normalizeName(c.columnName); for (var h2 = 0; h2 < headers.length; h2++) { if (normalizeName(headers[h2]) === nname) { c.columnId = h2; break; } } }
                 }
                 if ((!c.columnName || c.columnName === '') && (typeof c.columnId === 'number')) { if (c.columnId >= 0 && c.columnId < headers.length) { c.columnName = headers[c.columnId]; } }
             } catch(e) {}
@@ -177,7 +211,17 @@
             for (var col in styleMap){ if (!Object.prototype.hasOwnProperty.call(styleMap,col)) continue; var style=mergedStyle(styleMap[col]); if (!style) continue; var target={ column: col, backgroundColor: style.backgroundColor, textColor: style.textColor, css: style.css, highlightParent: style.highlightParent }; if (childRow.length>0){ DataTablesColumnHighlighter.applyColumnStyling(childRow, target); } DataTablesColumnHighlighter.applyVisibleCellStyling(tableId, $parentRow, target); }
         },
         applyColumnStyling: function(childRow, target) {
-            childRow.find('.dtr-title').each(function() { var $elem = jQuery(this); var text = $elem.text().trim(); if (text === target.column) { var $dataElem = $elem.siblings('.dtr-data').length > 0 ? $elem.siblings('.dtr-data') : $elem.next(); if (target.backgroundColor) { $dataElem.css('background-color', target.backgroundColor); } if (target.textColor) { $dataElem.css('color', target.textColor); } if (target.css) { $dataElem.css(target.css); } if (target.highlightParent) { $elem.parent().css('background-color', target.backgroundColor); if (target.textColor) { $elem.parent().css('color', target.textColor); } } } });
+            var normTarget = normalizeName(target.column);
+            childRow.find('.dtr-title').each(function() {
+                var $elem = jQuery(this); var text = ($elem.text() || '').trim();
+                if (text === target.column || normalizeName(text) === normTarget) {
+                    var $dataElem = $elem.siblings('.dtr-data').length > 0 ? $elem.siblings('.dtr-data') : $elem.next();
+                    if (target.backgroundColor) { $dataElem.css('background-color', target.backgroundColor); }
+                    if (target.textColor) { $dataElem.css('color', target.textColor); }
+                    if (target.css) { $dataElem.css(target.css); }
+                    if (target.highlightParent) { $elem.parent().css('background-color', target.backgroundColor); if (target.textColor) { $elem.parent().css('color', target.textColor); } }
+                }
+            });
         },
         applyVisibleCellStyling: function(tableId, $parentRow, target) {
             try {

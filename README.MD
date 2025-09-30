@@ -9,6 +9,7 @@ A reusable JavaScript extension for DataTables that highlights specific columns 
 - Target columns by header name or index; per-target styles
 - Condition groups with `AND`/`OR`/`NONE` logic and robust operators
 - Applies to visible cells on init/draw and to responsive child rows on expand
+- Optional helper to toggle Responsive/ScrollX at runtime while preserving state (`datatables.toggleView.js`)
 
 ## Quick Start
 
@@ -90,6 +91,22 @@ If you prefer to attach rules in code instead of options:
 - `final-js-simple.html` — JavaScript data, simple rule
 - `final-js-and.html` — JavaScript data, AND group
 - `final-js-advanced.html` — JavaScript data, responsive demo with multiple rules, fail targets, styles
+- `final-toggle-view-preserve.html` — Toggle Responsive/ScrollX without losing highlighting or filters
+ - `final-toggle-view-preserve.html` — Toggle Responsive/ScrollX (default Buttons theme; no styling changes)
+ - `final-toggle-view-preserve-bootstrap5.html` — Same with Bootstrap 5 Buttons styling
+
+## Toggle Responsive/ScrollX (preserves state)
+
+Include the helper and call `hfxToggleView(api)` to switch modes without losing highlighting, searches, or column visibility:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.3/dist/datatables.toggleView.js"></script>
+<script>
+  var api = $('#table').DataTable({ responsive: true, columnHighlighter: { rules: [...] } });
+  // later
+  api = window.hfxToggleView(api) || api; // switches mode & preserves state
+```
+
 - `examples/datatables-bootstrap-striped-responsive.html` — Bootstrap `table-striped` + Responsive; shows consistent per-cell highlights
 
 ### Bootstrap 5.3 striped tables
@@ -102,3 +119,20 @@ When a `backgroundColor` is provided, the Column Highlighter now:
 - paints an inset `box-shadow` with your color (`inset 0 0 0 9999px <color>`),
 
 so highlights look identical on striped and non-striped rows. Any custom `css` you pass still applies last and can override these (for example `{ 'box-shadow': 'none' }`).
+## Toggle button (seamless)
+
+The extension does not alter your styling. To add the toggle in the standard Buttons bar, include the button type and you’re done:
+
+```js
+$('#table').DataTable({
+  dom: 'Bfrtip',
+  buttons: ['copyHtml5','excelHtml5','colvis','print','toggleView'],
+  responsive: true
+});
+```
+
+If you are using Bootstrap 5 theme for Buttons, load the `buttons.bootstrap5` CSS/JS; the toggle inherits that look automatically. A standalone button is also available via the attribute:
+
+```html
+<button class="btn btn-primary btn-sm" data-hfx-toggle="#table">⇄ Switch to ScrollX</button>
+```

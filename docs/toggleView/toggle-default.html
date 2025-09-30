@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Toggle View — Default Buttons Theme</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
+    <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+    <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+    <!-- Toggle logic + Buttons integration -->
+    <script src="../../dist/datatables.toggleView.js"></script>
+    <script src="../../dist/buttons.toggleView.js"></script>
+    <!-- Column highlighter so we verify preserving config on switch -->
+    <script src="../../sources/datatables/columnHighlighter/datatables.columnHighlighter.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 12px; }
+      .narrow { max-width: 880px; margin: 0 auto; }
+      .example-notes { margin-top: 18px; }
+      .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+      pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
+    </style>
+    <script>
+      $(function(){
+        $('#tblToggle').DataTable({
+          dom: 'Bfrtip',
+          stateSave: true,
+          responsive: true,
+          buttons: ['copyHtml5','csvHtml5','excelHtml5','colvis','print','toggleView'],
+          data: [
+            { Name: 'D', Fail: 3, Pass: 2, Skip: 0, TFail: 0, TPass: 4 },
+            { Name: 'A', Fail: 1, Pass: 0, Skip: 0, TFail: 0, TPass: 1 },
+            { Name: 'B', Fail: 0, Pass: 1, Skip: 0, TFail: 0, TPass: 1 },
+            { Name: 'C', Fail: 0, Pass: 0, Skip: 1, TFail: 1, TPass: 0 }
+          ],
+          columns: [
+            { data:'Name',  title:'Name' },
+            { data:'Fail',  title:'Rule Checks Fail' },
+            { data:'Pass',  title:'Rule Checks Pass' },
+            { data:'Skip',  title:'Rule Checks Skip' },
+            { data:'TFail', title:'Tests Fail' },
+            { data:'TPass', title:'Tests Pass' }
+          ],
+          columnHighlighter: {
+            rules: [
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'Fail',  operator:'gt', type:'number', value:0 }] }], targets:[{ column:'Rule Checks Fail',  textColor:'#dc143c' }] },
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'Pass',  operator:'gt', type:'number', value:0 }] }], targets:[{ column:'Rule Checks Pass',  textColor:'#2e8b57' }] },
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'Skip',  operator:'gt', type:'number', value:0 }] }], targets:[{ column:'Rule Checks Skip',  textColor:'#1e90ff' }] },
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'TFail', operator:'gt', type:'number', value:0 }] }], targets:[{ column:'Tests Fail',        textColor:'#dc143c' }] },
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'TPass', operator:'gt', type:'number', value:0 }] }], targets:[{ column:'Tests Pass',        textColor:'#2e8b57' }] }
+            ]
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md"></script>
+    <div class="narrow">
+      <h2>Toggle View (Default Buttons Theme)</h2>
+      <p>Demonstrates the integrated <code>toggleView</code> button. Switching between Responsive and ScrollX preserves highlighting, searches, ordering, and column visibility.</p>
+      <table id="tblToggle" class="display nowrap" style="width:100%"></table>
+
+      <section class="example-notes">
+        <h3>Buttons setup</h3>
+<pre><code class="language-js">// Include DataTables + Responsive + Buttons, then:
+$('#tblToggle').DataTable({
+  dom: 'Bfrtip',
+  responsive: true,
+  buttons: [ 'copyHtml5', 'csvHtml5', 'excelHtml5', 'colvis', 'print', 'toggleView' ]
+});
+</code></pre>
+
+        <h3>Toggle helper scripts</h3>
+<pre><code class="language-html">&lt;script src="/dist/datatables.toggleView.js"&gt;&lt;/script&gt;
+&lt;script src="/dist/buttons.toggleView.js"&gt;&lt;/script&gt;
+</code></pre>
+
+        <h3>Highlighting rules</h3>
+<pre><code class="language-js">columnHighlighter: {
+  rules: [
+    { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'Fail', operator:'gt', type:'number', value:0 }] }], targets:[{ column:'Fail', textColor:'#dc143c' }] },
+    { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'Pass', operator:'gt', type:'number', value:0 }] }], targets:[{ column:'Pass', textColor:'#2e8b57' }] }
+  ]
+}
+</code></pre>
+      </section>
+    </div>
+  </body>
+
+</html>
