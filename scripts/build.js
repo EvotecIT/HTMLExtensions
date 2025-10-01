@@ -119,4 +119,24 @@ function discoverBundles() {
     if (b.type === 'js') await buildFile(b);
     else if (b.type === 'css') await buildCssFile(b);
   }
+  // Keep GitHub Pages examples reliable: mirror dist/ into docs/dist/
+  try {
+    const distDir = path.join(root, 'dist');
+    const docsDist = path.join(root, 'docs', 'dist');
+    ensureDir(docsDist);
+    const files = fs.readdirSync(distDir).filter(f => /\.(js|css)$/.test(f));
+    for (const f of files) {
+      const src = path.join(distDir, f);
+      const dst = path.join(docsDist, f);
+      const srcBuf = fs.readFileSync(src);
+      let needCopy = true;
+      if (fs.existsSync(dst)) {
+        try { needCopy = srcBuf.compare(fs.readFileSync(dst)) !== 0; } catch (_) { needCopy = true; }
+      }
+      if (needCopy) fs.writeFileSync(dst, srcBuf);
+    }
+    console.log('Synced dist -> docs/dist');
+  } catch (e) {
+    console.warn('Warning: could not sync dist to docs/dist:', e && e.message ? e.message : e);
+  }
 })();
