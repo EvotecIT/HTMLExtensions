@@ -9,7 +9,15 @@
     try { return new URLSearchParams(window.location.search).get(name); } catch(_) { return null; }
   }
   function loadScript(src){
-    var s = document.createElement('script'); s.src = src; s.defer = false; document.head.appendChild(s);
+    return new Promise(function(resolve, reject){
+      try {
+        var s = document.createElement('script');
+        s.src = src; s.defer = false;
+        s.onload = function(){ resolve(src); };
+        s.onerror = function(){ reject(new Error('Failed to load '+src)); };
+        document.head.appendChild(s);
+      } catch(e) { reject(e); }
+    });
   }
   function pathUp(urlStr, n){
     try {
@@ -45,13 +53,27 @@
     var mode = qp || defaultMode;
     return mode === 'local' ? computeLocalBase(me) : computeCdnBase();
   }
+  function bases(me){
+    // Return preferred then fallback
+    var p = computeBase(me);
+    var local = computeLocalBase(me);
+    var cdn = computeCdnBase();
+    if (p === local) return [local, cdn];
+    return [cdn, local];
+  }
   function run(){
     var me = Array.from(document.scripts).find(function(s){ return (s.src||'').indexOf('assets/hfx-loader.js') !== -1; });
     if (!me) return;
     var files = (me.dataset.hfxFiles || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
     if (!files.length) return;
-    var base = computeBase(me);
-    files.forEach(function(f){ loadScript(base + f); });
+    var order = bases(me);
+    var first = order[0], second = order[1];
+    files.forEach(function(f){
+      loadScript(first + f).catch(function(){
+        console.warn('[HFX] Falling back to secondary source for', f);
+        return loadScript(second + f);
+      }).catch(function(err){ console.error('[HFX] Unable to load', f, err); });
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
 })();

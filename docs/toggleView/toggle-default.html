@@ -19,8 +19,9 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
-    <!-- HTMLExtensions loader (switch with ?dist=local or ?dist=cdn) -->
-    <script src="../assets/hfx-loader.js" data-hfx-files="datatables.toggleView.js, datatables.columnHighlighter.js"></script>
+    <!-- HTMLExtensions scripts (local first, fallback to CDN) -->
+    <script src="../../dist/datatables.toggleView.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@latest/dist/datatables.toggleView.js'"></script>
+    <script src="../../dist/datatables.columnHighlighter.js" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@latest/dist/datatables.columnHighlighter.js'"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
