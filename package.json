@@ -34,6 +34,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "format": "prettier --write \"sources/**/*.js\"",
+    "format:check": "prettier --check \"sources/**/*.js\"",
     "build": "npm run clean && node scripts/build.js",
     "prepublishOnly": "npm run format && npm run build"
   }

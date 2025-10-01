@@ -34,8 +34,21 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@evotecit"
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Enable npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (ci with lock, or create lockfile first)
+        shell: bash
+        run: |
+          set -e
+          if [ ! -f package-lock.json ]; then
+            echo "No package-lock.json; generating lockfile..."
+            npm install --package-lock-only
+          fi
+          npm ci
 
       - name: Derive version from tag (if not provided)
         id: ver
@@ -57,6 +70,9 @@ jobs:
 
       - name: Lint/Format sources
         run: npm run format
+
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Build dist
         run: npm run build

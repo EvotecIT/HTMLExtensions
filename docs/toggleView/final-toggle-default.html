@@ -19,10 +19,8 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
-    <!-- Toggle logic (single bundle includes Buttons integration) -->
-    <script src="../../dist/datatables.toggleView.js"></script>
-    <!-- Column highlighter so we verify preserving config on switch -->
-    <script src="../../sources/datatables/columnHighlighter/datatables.columnHighlighter.js"></script>
+    <!-- HTMLExtensions loader (switch with ?dist=local or ?dist=cdn) -->
+    <script src="../assets/hfx-loader.js" data-hfx-files="datatables.toggleView.js, datatables.columnHighlighter.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
@@ -87,9 +85,8 @@ $('#tblToggle').DataTable({
 });
 </code></pre>
 
-        <h3>Toggle helper scripts</h3>
+        <h3>Toggle helper script</h3>
 <pre><code class="language-html">&lt;script src="/dist/datatables.toggleView.js"&gt;&lt;/script&gt;
-&lt;script src="/dist/buttons.toggleView.js"&gt;&lt;/script&gt;
 </code></pre>
 
         <h3>Highlighting rules</h3>
