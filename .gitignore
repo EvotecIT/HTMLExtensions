@@ -1,2 +1,3 @@
 ﻿# keep dist tracked when created by CI
 !dist/
+node_modules/

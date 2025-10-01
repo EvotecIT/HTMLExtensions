@@ -197,7 +197,15 @@
                 if (matched){ for (var t=0;t<rule.targets.length;t++){ var nt=normalizeTarget(rule.targets[t]); pushStyle(nt.column, nt, true); } }
                 else if (rule.failTargets){ for (var ft=0;ft<rule.failTargets.length;ft++){ var nf=normalizeTarget(rule.failTargets[ft]); pushStyle(nf.column, nf, false); } }
             }
-            for (var col in styleMap){ if (!Object.prototype.hasOwnProperty.call(styleMap,col)) continue; var style=mergedStyle(styleMap[col]); if (!style) continue; var target={ column: col, backgroundColor: style.backgroundColor, textColor: style.textColor, css: style.css, highlightParent: style.highlightParent }; if (childRow.length>0){ DataTablesColumnHighlighter.applyColumnStyling(childRow, target); } DataTablesColumnHighlighter.applyVisibleCellStyling(tableId, $parentRow, target); }
+            for (var col in styleMap){
+                if (!Object.prototype.hasOwnProperty.call(styleMap,col)) continue;
+                var style=mergedStyle(styleMap[col]); if (!style) continue;
+                // Coerce numeric-like keys back to numbers so index-based targets work reliably
+                var key = /^-?\d+$/.test(col) ? parseInt(col, 10) : col;
+                var target={ column: key, backgroundColor: style.backgroundColor, textColor: style.textColor, css: style.css, highlightParent: style.highlightParent };
+                if (childRow.length>0){ DataTablesColumnHighlighter.applyColumnStyling(childRow, target); }
+                DataTablesColumnHighlighter.applyVisibleCellStyling(tableId, $parentRow, target);
+            }
         },
         applyColumnStyling: function(childRow, target) {
             var normTarget = normalizeName(target.column);
