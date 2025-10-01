@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Indexes, Ranges, Fail Targets (HTML data)</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <style> body { font-family: Arial, sans-serif; padding: 12px; } .narrow{ max-width:860px; margin:0 auto;} </style>
+    <script data-cfasync="false" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js"></script>
+    <script>
+      $(function(){
+        $('#idxRanges').DataTable({
+          responsive: { details: { type:'inline' } },
+          columnHighlighter: {
+            rules: [
+              // Index target: column 1 (CPU) >= 90 → dashed red border
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'CPU', operator:'ge', type:'number', value:90 }] }],
+                targets:[ { column:1, css:{ border:'1px dashed #dc3545' } } ],
+                failTargets:[ { column:1, css:{ color:'#6c757d' } } ] },
+              // Range: columns 1..2 when Mem in [200,500]
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'Mem', operator:'betweenInclusive', type:'number', value:[200,500] }] }],
+                targets:[ { column:1, backgroundColor:'#e3f8ff' }, { column:2, backgroundColor:'#e3f8ff' } ] }
+            ]
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md"></script>
+    <div class="narrow">
+      <h2>Indexes, Ranges, Fail Targets</h2>
+      <table id="idxRanges" class="display nowrap" style="width:100%">
+        <thead><tr><th>Name</th><th>CPU</th><th>Mem</th></tr></thead>
+        <tbody>
+          <tr><td>Proc1</td><td>20</td><td>150</td></tr>
+          <tr><td>Proc2</td><td>95</td><td>400</td></tr>
+          <tr><td>Proc3</td><td>55</td><td>220</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+
+</html>
+

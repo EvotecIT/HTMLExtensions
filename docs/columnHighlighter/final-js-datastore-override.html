@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JavaScript Data + DataStore Override</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <style> body { font-family: Arial, sans-serif; padding: 12px; } .narrow{ max-width:860px; margin:0 auto;} </style>
+    <script data-cfasync="false" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js"></script>
+    <script>
+      $(function(){
+        var rows = [
+          { Row: 1, A: 10, B: 20, C: 30 },
+          { Row: 2, A: 15, B: 10, C: 5  },
+          { Row: 3, A: 40, B: 30, C: 20 }
+        ];
+        $('#jsStore').DataTable({
+          data: rows,
+          columns: [
+            { data:'Row', title:'Row' },
+            { data:'A',   title:'A'   },
+            { data:'B',   title:'B'   },
+            { data:'C',   title:'C'   }
+          ],
+          responsive: { details: { type:'inline' } },
+          columnHighlighter: {
+            rules: [
+              // Exclusive between (10,30) on B, force JavaScript store explicitly
+              { conditionsContainer:[{ logic:'AND', conditions:[{ columnName:'B', operator:'between', type:'number', value:[10,30], dataStore:'JavaScript' }] }],
+                targets:[ { column:'B', backgroundColor:'#fff3cd', css:{ border:'1px solid #ffecb5' } } ] }
+            ]
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md"></script>
+    <div class="narrow">
+      <h2>JavaScript Rendering + DataStore Override</h2>
+      <table id="jsStore" class="display nowrap" style="width:100%"></table>
+    </div>
+  </body>
+
+</html>
+
