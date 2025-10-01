@@ -21,15 +21,18 @@
     } catch(_) { return null; }
   }
   function computeLocalBase(me){
-    // Default: derive ../../dist/ from script location (docs/assets/hfx-loader.js)
-    // me.src -> .../docs/assets/hfx-loader.js
+    // Highest-priority override
+    if (window.HFX_LOCAL_DIST_BASE) return window.HFX_LOCAL_DIST_BASE;
+    // For hosted site (http/https), prefer absolute '/dist/' at site root
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+      return '/dist/';
+    }
+    // For file:// usage, derive ../../dist/ from script location
     try {
       var assetsDir = pathUp(me.src, 1);           // .../docs/
       var repoRoot  = pathUp(assetsDir.href, 1);   // .../ (Ignore/HtmlExtensions/)
       if (repoRoot) { repoRoot.pathname += 'dist/'; return repoRoot.href; }
     } catch(_) {}
-    // Fallbacks
-    if (window.HFX_LOCAL_DIST_BASE) return window.HFX_LOCAL_DIST_BASE;
     return '../../dist/';
   }
   function computeCdnBase(){
@@ -37,7 +40,8 @@
   }
   function computeBase(me){
     var qp = (getParam('dist')||'').toLowerCase();
-    var defaultMode = (location.protocol === 'file:') ? 'local' : 'cdn';
+    // Default to local on both file:// and http(s) so docs always match this repo's dist
+    var defaultMode = 'local';
     var mode = qp || defaultMode;
     return mode === 'local' ? computeLocalBase(me) : computeCdnBase();
   }
