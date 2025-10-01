@@ -20,9 +20,9 @@ A reusable JavaScript extension for DataTables that highlights specific columns 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/EvotecIT/HTMLExtensions@v1.0.0/datatables.columnHighlighter.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/EvotecIT/HTMLExtensions@v0.1.5/datatables.columnHighlighter.js"></script>
 <!-- Or auto-minified: -->
-<!-- <script src="https://cdn.jsdelivr.net/gh/EvotecIT/HTMLExtensions@v1.0.0/datatables.columnHighlighter.js?min"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/gh/EvotecIT/HTMLExtensions@v0.1.5/datatables.columnHighlighter.js?min"></script> -->
 ```
 
 2) Initialize your DataTable with a `columnHighlighter` block:

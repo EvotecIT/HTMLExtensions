@@ -1,11 +1,14 @@
-name: "Build & Release"
+name: "Build & Release HTMLExtensions"
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: "Version (e.g. 0.1.1)"
-        required: true
+        description: "Version (e.g. 0.1.6). If omitted, use tag name on push."
+        required: false
         type: string
 
 permissions:
@@ -31,32 +34,32 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           scope: "@evotecit"
 
-      - name: Install terser
-        run: npm i -D terser
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Build dist
+      - name: Derive version from tag (if not provided)
+        id: ver
+        shell: bash
         run: |
           set -e
-          mkdir -p dist
-          npx terser \
-            sources/datatables/columnHighlighter/datatables.columnHighlighter.js \
-            --compress --mangle \
-            --comments=/^!/ \
-            -o dist/datatables.columnHighlighter.min.js
-          cp sources/datatables/columnHighlighter/datatables.columnHighlighter.js dist/
-          # Build Toggle View (helper + Buttons UMD in one bundle)
-          npx terser \
-            sources/datatables/toggleView/datatables.toggleView.js \
-            --compress --mangle \
-            --comments=/^!/ \
-            -o dist/datatables.toggleView.min.js
-          cp sources/datatables/toggleView/datatables.toggleView.js dist/
+          VER="${{ inputs.version }}"
+          if [ -z "$VER" ] && [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            VER="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$VER" >> $GITHUB_OUTPUT
 
       - name: Bump package.json version (if present)
+        if: steps.ver.outputs.version != ''
         run: |
           if [ -f package.json ]; then
-            node -e "let f='package.json',p=require('./'+f);p.version=process.env.VERSION;require('fs').writeFileSync(f, JSON.stringify(p,null,2)+'\n')"
+            node -e "let f='package.json',p=require('./'+f);p.version='${{ steps.ver.outputs.version }}';require('fs').writeFileSync(f, JSON.stringify(p,null,2)+'\n')"
           fi
+
+      - name: Lint/Format sources
+        run: npm run format
+
+      - name: Build dist
+        run: npm run build
 
       - name: Commit dist (and package.json if changed)
         run: |
@@ -68,7 +71,8 @@ jobs:
             git push origin HEAD:$BRANCH
           fi
 
-      - name: Create tag (skip if exists)
+      - name: Create tag (skip if exists) [workflow_dispatch only]
+        if: github.event_name == 'workflow_dispatch'
         run: |
           TAG="v$VERSION"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -81,13 +85,9 @@ jobs:
       - name: Create GitHub Release and upload assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ inputs.version }}
-          name: v${{ inputs.version }}
-          files: |
-            dist/datatables.columnHighlighter.min.js
-            dist/datatables.columnHighlighter.js
-            dist/datatables.toggleView.min.js
-            dist/datatables.toggleView.js
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.version) }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.version) }}
+          files: dist/**
 
       - name: Publish to npm (only if token present)
         env:

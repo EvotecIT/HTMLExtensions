@@ -21,9 +21,9 @@ A reusable JavaScript extension for DataTables that highlights specific columns 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.1/dist/datatables.columnHighlighter.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.5/dist/datatables.columnHighlighter.js"></script>
 <!-- Or auto-minified: -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.1/dist/datatables.columnHighlighter.min.js"></script> -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.5/dist/datatables.columnHighlighter.min.js"></script> -->
 ```
 
 2) Initialize your DataTable with a `columnHighlighter` block:
@@ -100,7 +100,7 @@ If you prefer to attach rules in code instead of options:
 Include the helper and call `hfxToggleView(api)` to switch modes without losing highlighting, searches, or column visibility:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.3/dist/datatables.toggleView.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.5/dist/datatables.toggleView.js"></script>
 <script>
   var api = $('#table').DataTable({ responsive: true, columnHighlighter: { rules: [...] } });
   // later

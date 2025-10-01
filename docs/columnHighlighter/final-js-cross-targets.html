@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DataTables Column Highlighter — JS Cross-Targets</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+    <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+    <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="../../sources/datatables/columnHighlighter/datatables.columnHighlighter.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 10px; }
+      .narrow { max-width: 720px; margin: 0 auto; }
+      .example-notes { margin-top: 18px; }
+      .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+      pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
+    </style>
+    <script>
+      $(function(){
+        var data = [
+          { Name: 'Alpha',  Status: 'Overdue', Score: 68,  Notes: 'Pending action' },
+          { Name: 'Bravo',  Status: 'Green',   Score: 92,  Notes: 'OK' },
+          { Name: 'Charlie',Status: 'Red',     Score: 85,  Notes: 'High priority' },
+          { Name: 'Delta',  Status: 'Red',     Score: 40,  Notes: 'Investigate' },
+          { Name: 'Echo',   Status: 'Overdue', Score: 77,  Notes: 'Retry scheduled' }
+        ];
+        $('#demoJsCrossTargets').DataTable({
+          responsive: { details: { type: 'inline' } },
+          data: data,
+          columns: [
+            { data: 'Name',   title: 'Name' },
+            { data: 'Status', title: 'Status' },
+            { data: 'Score',  title: 'Score' },
+            { data: 'Notes',  title: 'Notes' }
+          ],
+          columnHighlighter: {
+            rules: [
+              // Base on X, highlight single Y
+              { conditionsContainer: [{ logic: 'AND', conditions: [ { columnName: 'Status', operator: 'eq', type: 'string', value: 'Green' } ] }],
+                targets: [ { column: 'Status', css: { 'background-color': '#d1e7dd', color: '#0f5132' } } ] },
+
+              // Base on X, highlight Y,Z (multiple cross-targets)
+              { conditionsContainer: [{ logic: 'AND', conditions: [ { columnName: 'Status', operator: 'eq', type: 'string', value: 'Overdue' } ] }],
+                targets: [
+                  { column: 'Score', css: { 'background-color': '#fff3cd', color: '#664d03' } },
+                  { column: 'Notes', css: { 'background-color': '#fff3cd', color: '#664d03' } }
+                ] },
+
+              // Multiple conditions (X and Y), highlight Z,A,C
+              { conditionsContainer: [{ logic: 'AND', conditions: [
+                  { columnName: 'Status', operator: 'eq', type: 'string', value: 'Red' },
+                  { columnName: 'Score',  operator: 'ge', type: 'number', value: 80 }
+                ] }],
+                targets: [
+                  { column: 'Name',   css: { 'background-color': '#f8d7da', color: '#842029', 'font-weight': 'bold' } },
+                  { column: 'Status', css: { 'background-color': '#f8d7da', color: '#842029' } },
+                  { column: 'Score',  css: { 'background-color': '#f8d7da', color: '#842029' } }
+                ],
+                failTargets: [ { column: 'Score', css: { 'opacity': '0.95' } } ] }
+            ]
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md"></script>
+    <h2>JavaScript — Cross-Targets and Multi-Conditions</h2>
+    <div class="narrow">
+      <table id="demoJsCrossTargets" class="display compact" style="width:100%"></table>
+    </div>
+
+    <section class="example-notes">
+      <h3>About this example</h3>
+      <p>Demonstrates basing conditions on one field while highlighting other fields, and using multiple conditions:</p>
+      <ul>
+        <li>Status == Green → highlight Status.</li>
+        <li>Status == Overdue → highlight Score and Notes.</li>
+        <li>Status == Red AND Score >= 80 → highlight Name, Status, Score; else dim Score slightly.</li>
+      </ul>
+      <h3>Configuration</h3>
+<pre><code class="language-js">columnHighlighter: {
+  rules: [
+    { conditionsContainer: [{ logic: 'AND', conditions: [ { columnName: 'Status', operator: 'eq', type: 'string', value: 'Green' } ] }],
+      targets: [ { column: 'Status', css: { 'background-color': '#d1e7dd', color: '#0f5132' } } ] },
+    { conditionsContainer: [{ logic: 'AND', conditions: [ { columnName: 'Status', operator: 'eq', type: 'string', value: 'Overdue' } ] }],
+      targets: [
+        { column: 'Score', css: { 'background-color': '#fff3cd', color: '#664d03' } },
+        { column: 'Notes', css: { 'background-color': '#fff3cd', color: '#664d03' } }
+      ] },
+    { conditionsContainer: [{ logic: 'AND', conditions: [
+        { columnName: 'Status', operator: 'eq', type: 'string', value: 'Red' },
+        { columnName: 'Score',  operator: 'ge', type: 'number', value: 80 }
+      ] }],
+      targets: [
+        { column: 'Name',   css: { 'background-color': '#f8d7da', color: '#842029', 'font-weight': 'bold' } },
+        { column: 'Status', css: { 'background-color': '#f8d7da', color: '#842029' } },
+        { column: 'Score',  css: { 'background-color': '#f8d7da', color: '#842029' } }
+      ],
+      failTargets: [ { column: 'Score', css: { 'opacity': '0.95' } } ] }
+  ]
+}</code></pre>
+    </section>
+  </body>
+
+</html>
+

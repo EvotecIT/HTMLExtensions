@@ -26,6 +26,15 @@
     "access": "public"
   },
   "devDependencies": {
-    "terser": "^5.44.0"
+    "terser": "^5.44.0",
+    "prettier": "^3.3.3",
+    "rimraf": "^5.0.5",
+    "clean-css": "^5.3.3"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "format": "prettier --write \"sources/**/*.js\"",
+    "build": "npm run clean && node scripts/build.js",
+    "prepublishOnly": "npm run format && npm run build"
   }
 }

@@ -5,7 +5,7 @@
 //     columnHighlighter: { rules: [ /* see README.md */ ] }
 //   });
 /*
- DataTables Column Highlighter v1.0.0
+ DataTables Column Highlighter v0.1.5
  (c) 2025 EvotecIT | MIT
  https://github.com/EvotecIT/HTMLExtensions
 */

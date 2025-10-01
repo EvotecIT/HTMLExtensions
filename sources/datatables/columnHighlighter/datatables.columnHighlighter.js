@@ -1,14 +1,3 @@
-// DataTables Column Highlighter (standalone)
-// Combines conditional engine and responsive child-row + visible cell styling
-// Usage:
-//   $('#table').DataTable({
-//     columnHighlighter: { rules: [ /* see README.md */ ] }
-//   });
-/*
- DataTables Column Highlighter v1.0.0
- (c) 2025 EvotecIT | MIT
- https://github.com/EvotecIT/HTMLExtensions
-*/
 (function(){
     if (typeof window === 'undefined') { return; }
 
