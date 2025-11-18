@@ -28,7 +28,7 @@
   "devDependencies": {
     "terser": "^5.44.0",
     "prettier": "^3.3.3",
-    "rimraf": "^5.0.5",
+    "rimraf": "^6.1.0",
     "clean-css": "^5.3.3"
   },
   "scripts": {
