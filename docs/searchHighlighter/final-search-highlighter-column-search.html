@@ -8,15 +8,25 @@
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
         <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
         <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css" />
+        <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+        <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
         <link rel="stylesheet" href="../assets/site.css" />
         <script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
         <script data-cfasync="false" src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
         <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
         <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
         <style>
             body { font-family: Arial, sans-serif; padding: 10px; }
             thead input { width: 100%; box-sizing: border-box; padding: 5px; }
             .note { margin: 6px 0 10px; color: #555; }
+            .example-notes { margin-top: 18px; }
+            .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+            pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
         </style>
         <script>
             $(function () {
@@ -28,8 +38,8 @@
                         includeColumnSearch: true,
                         minLength: 2,
                         hitStyle: {
-                            backgroundColor: 'rgba(180, 215, 255, 0.85)',
-                            textColor: '#000',
+                            backgroundColor: '#f3d9fa',
+                            textColor: '#2b0a3d',
                             css: { 'border-radius': '3px', 'padding': '0 2px' }
                         }
                     }
@@ -78,7 +88,37 @@
                 <tr><td>carol</td><td>IT</td><td>Incident review: gamma outage</td><td>2025-01-06</td></tr>
             </tbody>
         </table>
+
+        <section class="example-notes">
+            <h3>About this example</h3>
+            <p>Highlights terms from both the global search box and per-column filters (<code>includeColumnSearch: true</code>).</p>
+
+            <h3>Configuration</h3>
+<pre><code class="language-js">var table = $('#demoSearchHighlighterColumns').DataTable({
+  orderCellsTop: true,
+  searching: true,
+  searchHighlighter: {
+    includeColumnSearch: true,
+    minLength: 2,
+    hitStyle: {
+      backgroundColor: '#f3d9fa',
+      textColor: '#2b0a3d',
+      css: { 'border-radius': '3px', 'padding': '0 2px' }
+    }
+  }
+});
+
+// Bind per-column search boxes (second header row).
+$('#demoSearchHighlighterColumns thead tr:eq(1) th').each(function (i) {
+  var input = $('input', this);
+  if (!input.length) return;
+  input.on('keyup change clear', function () {
+    if (table.column(i).search() !== this.value) {
+      table.column(i).search(this.value).draw();
+    }
+  });
+});</code></pre>
+        </section>
     </body>
 
 </html>
-

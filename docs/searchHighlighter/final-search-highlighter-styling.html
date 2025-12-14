@@ -8,40 +8,80 @@
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
         <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
         <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css" />
+        <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+        <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
         <link rel="stylesheet" href="../assets/site.css" />
         <script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
         <script data-cfasync="false" src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
         <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
         <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
         <style>
             body { font-family: Arial, sans-serif; padding: 10px; }
-            .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+            .grid { display: grid; grid-template-columns: 1fr; gap: 22px; }
             .note { margin: 6px 0 10px; color: #555; }
+            .example-notes { margin-top: 18px; }
+            .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+            pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
         </style>
         <script>
             $(function () {
+                $('#demoSearchHighlighterDefault').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    searching: true,
+                    searchHighlighter: true
+                });
+
                 $('#demoSearchHighlighterCssVars').DataTable({
                     responsive: { details: { type: 'inline' } },
                     searching: true,
                     searchHighlighter: {
                         // Uses the default CSS, but overrides its CSS variables on the table element
                         cssVars: {
-                            '--hfx-dt-search-hit-bg': 'rgba(180, 255, 215, 0.8)',
+                            '--hfx-dt-search-hit-bg': '#fff3bf',
                             '--hfx-dt-search-hit-color': '#000',
-                            '--hfx-dt-search-hit-radius': '4px'
+                            '--hfx-dt-search-hit-radius': '6px'
                         }
                     }
                 });
 
-                $('#demoSearchHighlighterInline').DataTable({
+                $('#demoSearchHighlighterInlineBadge').DataTable({
                     responsive: { details: { type: 'inline' } },
                     searching: true,
                     searchHighlighter: {
                         // Inline hit styling (similar concept to ColumnHighlighter targets)
                         hitStyle: {
-                            backgroundColor: 'rgba(255, 230, 170, 0.9)',
-                            textColor: '#000',
-                            css: { 'border-radius': '3px', 'padding': '0 2px' }
+                            backgroundColor: '#d3f9d8',
+                            textColor: '#0b2e13',
+                            css: {
+                                'border': '1px solid #2f9e44',
+                                'border-radius': '6px',
+                                'padding': '0 3px',
+                                'box-shadow': '0 0 0 1px rgba(0,0,0,0.04)'
+                            }
+                        }
+                    }
+                });
+
+                $('#demoSearchHighlighterUnderline').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    searching: true,
+                    searchHighlighter: {
+                        tag: 'span',
+                        // Underline-only style (no background)
+                        hitStyle: {
+                            backgroundColor: 'transparent',
+                            textColor: '#111',
+                            css: {
+                                'box-shadow': 'inset 0 -2px 0 0 #ffd43b',
+                                'padding': '0 1px',
+                                'border-radius': '0',
+                                'font-weight': '600'
+                            }
                         }
                     }
                 });
@@ -60,8 +100,29 @@
 
         <div class="grid">
             <section>
+                <h3>Default</h3>
+                <p class="note">Search for <code>alpha</code>, <code>svc</code>, <code>"Alpha cluster"</code>.</p>
+                <table id="demoSearchHighlighterDefault" class="display compact" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>svc_backup</td><td>IT</td><td>Nightly backup job for Alpha cluster</td></tr>
+                        <tr><td>alice</td><td>HR</td><td>Onboarding: Alpha / Bravo / Charlie</td></tr>
+                        <tr><td>bob</td><td>Finance</td><td>Quarterly report for Bravo region</td></tr>
+                        <tr><td>svc_sql</td><td>DBA</td><td>SQL maintenance window – Alpha and Delta</td></tr>
+                        <tr><td>carol</td><td>IT</td><td>Incident review: gamma outage</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
                 <h3>CSS Variables</h3>
-                <p class="note">Search for <code>alpha</code>, <code>svc</code>, <code>bravo</code>.</p>
+                <p class="note">High-contrast yellow via <code>cssVars</code>. Search for <code>alpha</code>, <code>svc</code>, <code>bravo</code>.</p>
                 <table id="demoSearchHighlighterCssVars" class="display compact" style="width:100%">
                     <thead>
                         <tr>
@@ -81,9 +142,30 @@
             </section>
 
             <section>
-                <h3>Inline Hit Style</h3>
-                <p class="note">Same data, but styled per-table with <code>hitStyle</code>.</p>
-                <table id="demoSearchHighlighterInline" class="display compact" style="width:100%">
+                <h3>Inline Hit Style (Badge)</h3>
+                <p class="note">Green badge-like hits via <code>hitStyle</code>. Search for <code>alpha</code>, <code>svc</code>, <code>delta</code>.</p>
+                <table id="demoSearchHighlighterInlineBadge" class="display compact" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>svc_backup</td><td>IT</td><td>Nightly backup job for Alpha cluster</td></tr>
+                        <tr><td>alice</td><td>HR</td><td>Onboarding: Alpha / Bravo / Charlie</td></tr>
+                        <tr><td>bob</td><td>Finance</td><td>Quarterly report for Bravo region</td></tr>
+                        <tr><td>svc_sql</td><td>DBA</td><td>SQL maintenance window – Alpha and Delta</td></tr>
+                        <tr><td>carol</td><td>IT</td><td>Incident review: gamma outage</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h3>Inline Hit Style (Underline)</h3>
+                <p class="note">Underline-only (no background) via <code>hitStyle</code>. Search for <code>alpha</code>, <code>report</code>, <code>outage</code>.</p>
+                <table id="demoSearchHighlighterUnderline" class="display compact" style="width:100%">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -101,7 +183,58 @@
                 </table>
             </section>
         </div>
+
+        <section class="example-notes">
+            <h3>Configuration</h3>
+<pre><code class="language-js">$('#demoSearchHighlighterDefault').DataTable({
+  searching: true,
+  searchHighlighter: true
+});
+
+$('#demoSearchHighlighterCssVars').DataTable({
+  searching: true,
+  searchHighlighter: {
+    cssVars: {
+      '--hfx-dt-search-hit-bg': '#fff3bf',
+      '--hfx-dt-search-hit-color': '#000',
+      '--hfx-dt-search-hit-radius': '6px'
+    }
+  }
+});
+
+$('#demoSearchHighlighterInlineBadge').DataTable({
+  searching: true,
+  searchHighlighter: {
+    hitStyle: {
+      backgroundColor: '#d3f9d8',
+      textColor: '#0b2e13',
+      css: {
+        'border': '1px solid #2f9e44',
+        'border-radius': '6px',
+        'padding': '0 3px',
+        'box-shadow': '0 0 0 1px rgba(0,0,0,0.04)'
+      }
+    }
+  }
+});
+
+$('#demoSearchHighlighterUnderline').DataTable({
+  searching: true,
+  searchHighlighter: {
+    tag: 'span',
+    hitStyle: {
+      backgroundColor: 'transparent',
+      textColor: '#111',
+      css: {
+        'box-shadow': 'inset 0 -2px 0 0 #ffd43b',
+        'padding': '0 1px',
+        'border-radius': '0',
+        'font-weight': '600'
+      }
+    }
+  }
+});</code></pre>
+        </section>
     </body>
 
 </html>
-
