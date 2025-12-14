@@ -1,7 +1,7 @@
 /*!
  HTMLExtensions v0.1.10 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2025 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T14:17:56.670Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T14:26:20.779Z
 */
 
 (function () {
@@ -16,7 +16,7 @@
     minLength: 1,
     caseSensitive: false,
     includeGlobalSearch: true,
-    includeColumnSearch: true
+    includeColumnSearch: true,
   };
 
   function escapeRegex(s) {
@@ -106,7 +106,7 @@
         var el = marksByAttr[i];
         var parent = el.parentNode;
         if (!parent) continue;
-        var text = (el.textContent || '');
+        var text = el.textContent || '';
         parent.replaceChild(root.ownerDocument.createTextNode(text), el);
       }
     } catch (_) {}
@@ -121,19 +121,24 @@
           if (!node || !node.classList) continue;
           var ok = true;
           for (var t = 0; t < tokens.length; t++) {
-            if (!node.classList.contains(tokens[t])) { ok = false; break; }
+            if (!node.classList.contains(tokens[t])) {
+              ok = false;
+              break;
+            }
           }
           if (!ok) continue;
           var p = node.parentNode;
           if (!p) continue;
-          var txt = (node.textContent || '');
+          var txt = node.textContent || '';
           p.replaceChild(root.ownerDocument.createTextNode(txt), node);
         }
       } catch (_) {}
     }
 
     // Merge adjacent text nodes introduced by replacements.
-    try { if (root.normalize) root.normalize(); } catch (_) {}
+    try {
+      if (root.normalize) root.normalize();
+    } catch (_) {}
   }
 
   function shouldSkipTextNode(node) {
@@ -208,7 +213,9 @@
       if (start > last) frag.appendChild(doc.createTextNode(text.slice(last, start)));
       var mark = doc.createElement(tagName);
       mark.className = className;
-      try { mark.setAttribute(HIT_ATTRIBUTE, '1'); } catch (_) {}
+      try {
+        mark.setAttribute(HIT_ATTRIBUTE, '1');
+      } catch (_) {}
       mark.appendChild(doc.createTextNode(match[0]));
       frag.appendChild(mark);
       last = end;
@@ -256,9 +263,10 @@
 
   function applyHighlighting(tableId) {
     try {
-      var entry = window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
-        ? window.DataTablesSearchHighlighter.configurations[tableId]
-        : null;
+      var entry =
+        window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
+          ? window.DataTablesSearchHighlighter.configurations[tableId]
+          : null;
       if (!entry || !entry.table) return;
       var api = entry.table;
       var opts = entry.opts || DEFAULTS;
@@ -296,15 +304,25 @@
     setupEventHandlers: function (tableId, api) {
       if (!api || !api.on) return;
       try {
-        api.on('draw.dt', function () { applyHighlighting(tableId); });
-        api.on('search.dt', function () { applyHighlighting(tableId); });
-        api.on('column-visibility.dt', function () { applyHighlighting(tableId); });
+        api.on('draw.dt', function () {
+          applyHighlighting(tableId);
+        });
+        api.on('search.dt', function () {
+          applyHighlighting(tableId);
+        });
+        api.on('column-visibility.dt', function () {
+          applyHighlighting(tableId);
+        });
         api.on('responsive-display', function (e, dt, row, showHide) {
           if (showHide) applyHighlighting(tableId);
         });
       } catch (_) {}
-      try { setTimeout(function () { applyHighlighting(tableId); }, 0); } catch (_) {}
-    }
+      try {
+        setTimeout(function () {
+          applyHighlighting(tableId);
+        }, 0);
+      } catch (_) {}
+    },
   };
 
   function autoInitFromSettings(settings) {
@@ -313,9 +331,10 @@
       var tableId = settings && settings.nTable ? settings.nTable.getAttribute('id') : null;
       if (!tableId) return;
 
-      var existing = window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
-        ? window.DataTablesSearchHighlighter.configurations[tableId]
-        : null;
+      var existing =
+        window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
+          ? window.DataTablesSearchHighlighter.configurations[tableId]
+          : null;
       if (existing) return;
 
       var oInit = settings.oInit || {};
@@ -331,8 +350,12 @@
   }
 
   try {
-    jQuery(document).on('preInit.dt', function (e, settings) { autoInitFromSettings(settings); });
-    jQuery(document).on('init.dt', function (e, settings) { autoInitFromSettings(settings); });
+    jQuery(document).on('preInit.dt', function (e, settings) {
+      autoInitFromSettings(settings);
+    });
+    jQuery(document).on('init.dt', function (e, settings) {
+      autoInitFromSettings(settings);
+    });
   } catch (_) {}
 
   try {
@@ -343,7 +366,9 @@
           try {
             var apis = jQuery.fn.dataTable.tables({ api: true });
             apis.every(function () {
-              try { autoInitFromSettings(this.settings()[0]); } catch (_) {}
+              try {
+                autoInitFromSettings(this.settings()[0]);
+              } catch (_) {}
             });
             return apis && apis.count && apis.count() > 0;
           } catch (_) {
@@ -352,7 +377,9 @@
         };
         // One-time scan is usually enough; init/preInit handlers cover late inits.
         doScan();
-        try { setTimeout(doScan, 0); } catch (_) {}
+        try {
+          setTimeout(doScan, 0);
+        } catch (_) {}
       } catch (_) {}
     });
   } catch (_) {}
