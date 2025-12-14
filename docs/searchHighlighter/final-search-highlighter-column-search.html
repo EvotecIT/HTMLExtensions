@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>HTMLExtensions — DataTables Search Highlighter (Column Search)</title>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+        <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css" />
+        <link rel="stylesheet" href="../assets/site.css" />
+        <script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+        <script data-cfasync="false" src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+        <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+        <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js"></script>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 10px; }
+            thead input { width: 100%; box-sizing: border-box; padding: 5px; }
+            .note { margin: 6px 0 10px; color: #555; }
+        </style>
+        <script>
+            $(function () {
+                var table = $('#demoSearchHighlighterColumns').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    orderCellsTop: true,
+                    searching: true,
+                    searchHighlighter: {
+                        includeColumnSearch: true,
+                        minLength: 2,
+                        hitStyle: {
+                            backgroundColor: 'rgba(180, 215, 255, 0.85)',
+                            textColor: '#000',
+                            css: { 'border-radius': '3px', 'padding': '0 2px' }
+                        }
+                    }
+                });
+
+                // Bind per-column search boxes (second header row).
+                $('#demoSearchHighlighterColumns thead tr:eq(1) th').each(function (i) {
+                    var input = $('input', this);
+                    if (!input.length) return;
+                    input.on('keyup change clear', function () {
+                        if (table.column(i).search() !== this.value) {
+                            table.column(i).search(this.value).draw();
+                        }
+                    });
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/searchHighlighter/README.md"></script>
+        <h2>Search Highlighter — Column Search</h2>
+        <p class="note">Use the per-column filters and the global search box. Hits from both are highlighted (default behavior).</p>
+
+        <table id="demoSearchHighlighterColumns" class="display compact" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Notes</th>
+                    <th>Created</th>
+                </tr>
+                <tr>
+                    <th><input type="text" placeholder="Filter Name" /></th>
+                    <th><input type="text" placeholder="Filter Dept" /></th>
+                    <th><input type="text" placeholder="Filter Notes" /></th>
+                    <th><input type="text" placeholder="Filter Created" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>svc_backup</td><td>IT</td><td>Nightly backup job for Alpha cluster</td><td>2025-01-01</td></tr>
+                <tr><td>svc_deploy</td><td>IT</td><td>Bravo rollout — app servers</td><td>2025-01-02</td></tr>
+                <tr><td>alice</td><td>HR</td><td>Onboarding: Alpha / Bravo / Charlie</td><td>2025-01-03</td></tr>
+                <tr><td>bob</td><td>Finance</td><td>Quarterly report for Bravo region</td><td>2025-01-04</td></tr>
+                <tr><td>svc_sql</td><td>DBA</td><td>SQL maintenance window – Alpha and Delta</td><td>2025-01-05</td></tr>
+                <tr><td>carol</td><td>IT</td><td>Incident review: gamma outage</td><td>2025-01-06</td></tr>
+            </tbody>
+        </table>
+    </body>
+
+</html>
+

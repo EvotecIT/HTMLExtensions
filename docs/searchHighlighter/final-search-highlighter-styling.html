@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>HTMLExtensions — DataTables Search Highlighter (Styling)</title>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+        <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css" />
+        <link rel="stylesheet" href="../assets/site.css" />
+        <script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+        <script data-cfasync="false" src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+        <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+        <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js"></script>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 10px; }
+            .grid { display: grid; grid-template-columns: 1fr; gap: 18px; }
+            .note { margin: 6px 0 10px; color: #555; }
+        </style>
+        <script>
+            $(function () {
+                $('#demoSearchHighlighterCssVars').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    searching: true,
+                    searchHighlighter: {
+                        // Uses the default CSS, but overrides its CSS variables on the table element
+                        cssVars: {
+                            '--hfx-dt-search-hit-bg': 'rgba(180, 255, 215, 0.8)',
+                            '--hfx-dt-search-hit-color': '#000',
+                            '--hfx-dt-search-hit-radius': '4px'
+                        }
+                    }
+                });
+
+                $('#demoSearchHighlighterInline').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    searching: true,
+                    searchHighlighter: {
+                        // Inline hit styling (similar concept to ColumnHighlighter targets)
+                        hitStyle: {
+                            backgroundColor: 'rgba(255, 230, 170, 0.9)',
+                            textColor: '#000',
+                            css: { 'border-radius': '3px', 'padding': '0 2px' }
+                        }
+                    }
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/searchHighlighter/README.md"></script>
+        <h2>Search Highlighter — Styling</h2>
+        <p>Two common ways to customize how hits look:</p>
+        <ol class="note">
+            <li>Override CSS variables (<code>cssVars</code>) so you can theme without adding custom CSS.</li>
+            <li>Provide per-table inline hit styles (<code>hitStyle</code>).</li>
+        </ol>
+
+        <div class="grid">
+            <section>
+                <h3>CSS Variables</h3>
+                <p class="note">Search for <code>alpha</code>, <code>svc</code>, <code>bravo</code>.</p>
+                <table id="demoSearchHighlighterCssVars" class="display compact" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>svc_backup</td><td>IT</td><td>Nightly backup job for Alpha cluster</td></tr>
+                        <tr><td>alice</td><td>HR</td><td>Onboarding: Alpha / Bravo / Charlie</td></tr>
+                        <tr><td>bob</td><td>Finance</td><td>Quarterly report for Bravo region</td></tr>
+                        <tr><td>svc_sql</td><td>DBA</td><td>SQL maintenance window – Alpha and Delta</td></tr>
+                        <tr><td>carol</td><td>IT</td><td>Incident review: gamma outage</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section>
+                <h3>Inline Hit Style</h3>
+                <p class="note">Same data, but styled per-table with <code>hitStyle</code>.</p>
+                <table id="demoSearchHighlighterInline" class="display compact" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>svc_backup</td><td>IT</td><td>Nightly backup job for Alpha cluster</td></tr>
+                        <tr><td>alice</td><td>HR</td><td>Onboarding: Alpha / Bravo / Charlie</td></tr>
+                        <tr><td>bob</td><td>Finance</td><td>Quarterly report for Bravo region</td></tr>
+                        <tr><td>svc_sql</td><td>DBA</td><td>SQL maintenance window – Alpha and Delta</td></tr>
+                        <tr><td>carol</td><td>IT</td><td>Incident review: gamma outage</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </body>
+
+</html>
+
