@@ -1,7 +1,7 @@
 /*!
  HTMLExtensions v0.1.10 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2025 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T12:40:14.246Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T13:56:46.258Z
 */
 
 (function () {

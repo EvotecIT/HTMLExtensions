@@ -1,10 +1,10 @@
 /*!
  HTMLExtensions v0.1.10 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2025 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T12:40:14.246Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T13:56:46.258Z
  */
 /*!
  HTMLExtensions v0.1.10 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2025 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T12:40:14.246Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T13:56:46.258Z
 */:root{--hfx-dt-search-hit-bg:rgba(180, 215, 255, 0.85);--hfx-dt-search-hit-color:#000;--hfx-dt-search-hit-radius:2px}mark.hfx-dt-search-hit,span.hfx-dt-search-hit{background:var(--hfx-dt-search-hit-bg);color:var(--hfx-dt-search-hit-color);border-radius:var(--hfx-dt-search-hit-radius);padding:0 1px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
