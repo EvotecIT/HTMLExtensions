@@ -1,7 +1,7 @@
 /*!
- HTMLExtensions v0.1.10 — DataTables ColumnHighlighter & ToggleView
+ HTMLExtensions v0.1.11 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2025 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T14:26:20.779Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T14:46:20.318Z
 */
 
 (function () {
@@ -17,6 +17,11 @@
     caseSensitive: false,
     includeGlobalSearch: true,
     includeColumnSearch: true,
+    // Optional styling helpers:
+    // - cssVars: apply CSS variables on the table element (e.g. --hfx-dt-search-hit-bg)
+    // - hitStyle: inline styles applied to each hit (similar shape to ColumnHighlighter targets)
+    cssVars: null,
+    hitStyle: null
   };
 
   function escapeRegex(s) {
@@ -96,6 +101,49 @@
     return raw.split(/\s+/g).filter(Boolean);
   }
 
+  function applyCssVars(element, vars) {
+    if (!isValidElement(element)) return;
+    if (!vars || typeof vars !== 'object') return;
+    try {
+      Object.keys(vars).forEach(function (k) {
+        var key = '' + k;
+        if (!key) return;
+        // Restrict to CSS custom properties only.
+        if (key.indexOf('--') !== 0) return;
+        var v = vars[k];
+        if (v === undefined || v === null) return;
+        try { element.style.setProperty(key, '' + v); } catch (_) {}
+      });
+    } catch (_) {}
+  }
+
+  function applyHitStyle(element, hitStyle) {
+    if (!element || element.nodeType !== 1) return;
+    if (!hitStyle || typeof hitStyle !== 'object') return;
+
+    try {
+      if (hitStyle.backgroundColor !== undefined && hitStyle.backgroundColor !== null && hitStyle.backgroundColor !== '') {
+        element.style.backgroundColor = '' + hitStyle.backgroundColor;
+      }
+
+      var tc = hitStyle.textColor;
+      if (tc === undefined || tc === null || tc === '') tc = hitStyle.color;
+      if (tc !== undefined && tc !== null && tc !== '') {
+        element.style.color = '' + tc;
+      }
+
+      // Additional CSS properties (kebab-case or CSS vars are fine via setProperty).
+      if (hitStyle.css && typeof hitStyle.css === 'object') {
+        Object.keys(hitStyle.css).forEach(function (k) {
+          if (!k) return;
+          var v = hitStyle.css[k];
+          if (v === undefined || v === null) return;
+          try { element.style.setProperty(k, '' + v); } catch (_) {}
+        });
+      }
+    } catch (_) {}
+  }
+
   function unwrapMarks(root, className) {
     if (!isValidElement(root)) return;
 
@@ -106,7 +154,7 @@
         var el = marksByAttr[i];
         var parent = el.parentNode;
         if (!parent) continue;
-        var text = el.textContent || '';
+        var text = (el.textContent || '');
         parent.replaceChild(root.ownerDocument.createTextNode(text), el);
       }
     } catch (_) {}
@@ -121,24 +169,19 @@
           if (!node || !node.classList) continue;
           var ok = true;
           for (var t = 0; t < tokens.length; t++) {
-            if (!node.classList.contains(tokens[t])) {
-              ok = false;
-              break;
-            }
+            if (!node.classList.contains(tokens[t])) { ok = false; break; }
           }
           if (!ok) continue;
           var p = node.parentNode;
           if (!p) continue;
-          var txt = node.textContent || '';
+          var txt = (node.textContent || '');
           p.replaceChild(root.ownerDocument.createTextNode(txt), node);
         }
       } catch (_) {}
     }
 
     // Merge adjacent text nodes introduced by replacements.
-    try {
-      if (root.normalize) root.normalize();
-    } catch (_) {}
+    try { if (root.normalize) root.normalize(); } catch (_) {}
   }
 
   function shouldSkipTextNode(node) {
@@ -195,7 +238,7 @@
     return nodes;
   }
 
-  function highlightTextNode(node, regex, tagName, className) {
+  function highlightTextNode(node, regex, tagName, className, hitStyle) {
     var text = node.nodeValue;
     if (!text) return;
 
@@ -213,9 +256,8 @@
       if (start > last) frag.appendChild(doc.createTextNode(text.slice(last, start)));
       var mark = doc.createElement(tagName);
       mark.className = className;
-      try {
-        mark.setAttribute(HIT_ATTRIBUTE, '1');
-      } catch (_) {}
+      try { mark.setAttribute(HIT_ATTRIBUTE, '1'); } catch (_) {}
+      applyHitStyle(mark, hitStyle);
       mark.appendChild(doc.createTextNode(match[0]));
       frag.appendChild(mark);
       last = end;
@@ -263,10 +305,9 @@
 
   function applyHighlighting(tableId) {
     try {
-      var entry =
-        window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
-          ? window.DataTablesSearchHighlighter.configurations[tableId]
-          : null;
+      var entry = window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
+        ? window.DataTablesSearchHighlighter.configurations[tableId]
+        : null;
       if (!entry || !entry.table) return;
       var api = entry.table;
       var opts = entry.opts || DEFAULTS;
@@ -289,7 +330,7 @@
 
       var nodes = collectTextNodes(tbody);
       for (var i = 0; i < nodes.length; i++) {
-        highlightTextNode(nodes[i], regex, tagName, className);
+        highlightTextNode(nodes[i], regex, tagName, className, opts.hitStyle);
       }
     } catch (_) {}
   }
@@ -299,30 +340,24 @@
     init: function (tableId, opts, tableApi) {
       var options = normalizeOptions(opts);
       this.configurations[tableId] = { opts: options, table: tableApi };
+      try {
+        var tableEl = tableApi && tableApi.table && tableApi.table().node ? tableApi.table().node() : null;
+        if (tableEl) applyCssVars(tableEl, options.cssVars);
+      } catch (_) {}
       this.setupEventHandlers(tableId, tableApi);
     },
     setupEventHandlers: function (tableId, api) {
       if (!api || !api.on) return;
       try {
-        api.on('draw.dt', function () {
-          applyHighlighting(tableId);
-        });
-        api.on('search.dt', function () {
-          applyHighlighting(tableId);
-        });
-        api.on('column-visibility.dt', function () {
-          applyHighlighting(tableId);
-        });
+        api.on('draw.dt', function () { applyHighlighting(tableId); });
+        api.on('search.dt', function () { applyHighlighting(tableId); });
+        api.on('column-visibility.dt', function () { applyHighlighting(tableId); });
         api.on('responsive-display', function (e, dt, row, showHide) {
           if (showHide) applyHighlighting(tableId);
         });
       } catch (_) {}
-      try {
-        setTimeout(function () {
-          applyHighlighting(tableId);
-        }, 0);
-      } catch (_) {}
-    },
+      try { setTimeout(function () { applyHighlighting(tableId); }, 0); } catch (_) {}
+    }
   };
 
   function autoInitFromSettings(settings) {
@@ -331,10 +366,9 @@
       var tableId = settings && settings.nTable ? settings.nTable.getAttribute('id') : null;
       if (!tableId) return;
 
-      var existing =
-        window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
-          ? window.DataTablesSearchHighlighter.configurations[tableId]
-          : null;
+      var existing = window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
+        ? window.DataTablesSearchHighlighter.configurations[tableId]
+        : null;
       if (existing) return;
 
       var oInit = settings.oInit || {};
@@ -350,12 +384,8 @@
   }
 
   try {
-    jQuery(document).on('preInit.dt', function (e, settings) {
-      autoInitFromSettings(settings);
-    });
-    jQuery(document).on('init.dt', function (e, settings) {
-      autoInitFromSettings(settings);
-    });
+    jQuery(document).on('preInit.dt', function (e, settings) { autoInitFromSettings(settings); });
+    jQuery(document).on('init.dt', function (e, settings) { autoInitFromSettings(settings); });
   } catch (_) {}
 
   try {
@@ -366,9 +396,7 @@
           try {
             var apis = jQuery.fn.dataTable.tables({ api: true });
             apis.every(function () {
-              try {
-                autoInitFromSettings(this.settings()[0]);
-              } catch (_) {}
+              try { autoInitFromSettings(this.settings()[0]); } catch (_) {}
             });
             return apis && apis.count && apis.count() > 0;
           } catch (_) {
@@ -377,9 +405,7 @@
         };
         // One-time scan is usually enough; init/preInit handlers cover late inits.
         doScan();
-        try {
-          setTimeout(doScan, 0);
-        } catch (_) {}
+        try { setTimeout(doScan, 0); } catch (_) {}
       } catch (_) {}
     });
   } catch (_) {}
