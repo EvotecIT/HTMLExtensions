@@ -1,6 +1,8 @@
 (function () {
   if (typeof window === 'undefined') return;
 
+  var HIT_ATTRIBUTE = 'data-hfx-dt-search-hit';
+
   var DEFAULTS = {
     enabled: true,
     tag: 'mark',
@@ -34,40 +36,98 @@
     var s = ('' + (input || '')).trim();
     if (!s) return [];
 
-    // Respect quoted phrases: "foo bar" -> one token.
+    // Tokenizer that respects quoted phrases and basic escapes:
+    // - "foo bar" -> one token
+    // - \" inside quotes -> a literal quote
     var tokens = [];
-    try {
-      var rx = /"([^"]+)"|(\S+)/g;
-      var m;
-      while ((m = rx.exec(s))) {
-        var t = (m[1] || m[2] || '').trim();
-        if (t) tokens.push(t);
+    var cur = '';
+    var inQuotes = false;
+    var escapeNext = false;
+
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i];
+
+      if (escapeNext) {
+        cur += ch;
+        escapeNext = false;
+        continue;
       }
-    } catch (_) {
-      tokens = s.split(/\s+/g);
+
+      // Only treat backslash escapes inside quotes to avoid breaking common search strings like domain\user.
+      if (ch === '\\' && inQuotes) {
+        escapeNext = true;
+        continue;
+      }
+
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+        continue;
+      }
+
+      if (!inQuotes && /\s/.test(ch)) {
+        var t = cur.trim();
+        if (t) tokens.push(t);
+        cur = '';
+        continue;
+      }
+
+      cur += ch;
     }
+
+    if (escapeNext) cur += '\\';
+    var tail = cur.trim();
+    if (tail) tokens.push(tail);
     return tokens;
   }
 
-  function isValidRoot(root) {
-    return root && root.querySelectorAll && root.ownerDocument;
+  function isValidElement(element) {
+    return element && element.querySelectorAll && element.ownerDocument;
+  }
+
+  function getClassTokens(className) {
+    var raw = ('' + (className || '')).trim();
+    if (!raw) return [];
+    return raw.split(/\s+/g).filter(Boolean);
   }
 
   function unwrapMarks(root, className) {
-    if (!isValidRoot(root)) return;
+    if (!isValidElement(root)) return;
+
+    // Preferred: unwrap only nodes created by this plugin (no selector injection risk).
     try {
-      var sel = 'mark.' + className + ', span.' + className;
-      var marks = root.querySelectorAll(sel);
-      for (var i = 0; i < marks.length; i++) {
-        var el = marks[i];
+      var marksByAttr = root.querySelectorAll('[' + HIT_ATTRIBUTE + ']');
+      for (var i = 0; i < marksByAttr.length; i++) {
+        var el = marksByAttr[i];
         var parent = el.parentNode;
         if (!parent) continue;
         var text = (el.textContent || '');
         parent.replaceChild(root.ownerDocument.createTextNode(text), el);
       }
-      // Merge adjacent text nodes introduced by replacements.
-      if (root.normalize) root.normalize();
     } catch (_) {}
+
+    // Back-compat / fallback: unwrap by class tokens if provided.
+    var tokens = getClassTokens(className);
+    if (tokens.length > 0) {
+      try {
+        var candidates = root.querySelectorAll('mark, span');
+        for (var j = 0; j < candidates.length; j++) {
+          var node = candidates[j];
+          if (!node || !node.classList) continue;
+          var ok = true;
+          for (var t = 0; t < tokens.length; t++) {
+            if (!node.classList.contains(tokens[t])) { ok = false; break; }
+          }
+          if (!ok) continue;
+          var p = node.parentNode;
+          if (!p) continue;
+          var txt = (node.textContent || '');
+          p.replaceChild(root.ownerDocument.createTextNode(txt), node);
+        }
+      } catch (_) {}
+    }
+
+    // Merge adjacent text nodes introduced by replacements.
+    try { if (root.normalize) root.normalize(); } catch (_) {}
   }
 
   function shouldSkipTextNode(node) {
@@ -98,7 +158,7 @@
 
   function collectTextNodes(root) {
     var nodes = [];
-    if (!isValidRoot(root)) return nodes;
+    if (!isValidElement(root)) return nodes;
     try {
       var walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
       var n;
@@ -142,6 +202,7 @@
       if (start > last) frag.appendChild(doc.createTextNode(text.slice(last, start)));
       var mark = doc.createElement(tagName);
       mark.className = className;
+      try { mark.setAttribute(HIT_ATTRIBUTE, '1'); } catch (_) {}
       mark.appendChild(doc.createTextNode(match[0]));
       frag.appendChild(mark);
       last = end;
@@ -201,7 +262,7 @@
       if (!tbody) return;
 
       var tagName = (opts.tag || 'mark').toLowerCase() === 'span' ? 'span' : 'mark';
-      var className = (opts.className || DEFAULTS.className).trim() || DEFAULTS.className;
+      var className = ('' + (opts.className || DEFAULTS.className)).trim() || DEFAULTS.className;
 
       // Always clear previous marks first so we don't nest/duplicate.
       unwrapMarks(tbody, className);
@@ -283,13 +344,9 @@
             return false;
           }
         };
+        // One-time scan is usually enough; init/preInit handlers cover late inits.
         doScan();
-        var tries = 0;
-        var timer = setInterval(function () {
-          var found = doScan();
-          tries++;
-          if (found || tries > 40) clearInterval(timer);
-        }, 50);
+        try { setTimeout(doScan, 0); } catch (_) {}
       } catch (_) {}
     });
   } catch (_) {}
