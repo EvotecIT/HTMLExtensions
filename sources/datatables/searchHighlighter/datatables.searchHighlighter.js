@@ -10,7 +10,12 @@
     minLength: 1,
     caseSensitive: false,
     includeGlobalSearch: true,
-    includeColumnSearch: true
+    includeColumnSearch: true,
+    // Optional styling helpers:
+    // - cssVars: apply CSS variables on the table element (e.g. --hfx-dt-search-hit-bg)
+    // - hitStyle: inline styles applied to each hit (similar shape to ColumnHighlighter targets)
+    cssVars: null,
+    hitStyle: null
   };
 
   function escapeRegex(s) {
@@ -88,6 +93,49 @@
     var raw = ('' + (className || '')).trim();
     if (!raw) return [];
     return raw.split(/\s+/g).filter(Boolean);
+  }
+
+  function applyCssVars(element, vars) {
+    if (!isValidElement(element)) return;
+    if (!vars || typeof vars !== 'object') return;
+    try {
+      Object.keys(vars).forEach(function (k) {
+        var key = '' + k;
+        if (!key) return;
+        // Restrict to CSS custom properties only.
+        if (key.indexOf('--') !== 0) return;
+        var v = vars[k];
+        if (v === undefined || v === null) return;
+        try { element.style.setProperty(key, '' + v); } catch (_) {}
+      });
+    } catch (_) {}
+  }
+
+  function applyHitStyle(element, hitStyle) {
+    if (!element || element.nodeType !== 1) return;
+    if (!hitStyle || typeof hitStyle !== 'object') return;
+
+    try {
+      if (hitStyle.backgroundColor !== undefined && hitStyle.backgroundColor !== null && hitStyle.backgroundColor !== '') {
+        element.style.backgroundColor = '' + hitStyle.backgroundColor;
+      }
+
+      var tc = hitStyle.textColor;
+      if (tc === undefined || tc === null || tc === '') tc = hitStyle.color;
+      if (tc !== undefined && tc !== null && tc !== '') {
+        element.style.color = '' + tc;
+      }
+
+      // Additional CSS properties (kebab-case or CSS vars are fine via setProperty).
+      if (hitStyle.css && typeof hitStyle.css === 'object') {
+        Object.keys(hitStyle.css).forEach(function (k) {
+          if (!k) return;
+          var v = hitStyle.css[k];
+          if (v === undefined || v === null) return;
+          try { element.style.setProperty(k, '' + v); } catch (_) {}
+        });
+      }
+    } catch (_) {}
   }
 
   function unwrapMarks(root, className) {
@@ -184,7 +232,7 @@
     return nodes;
   }
 
-  function highlightTextNode(node, regex, tagName, className) {
+  function highlightTextNode(node, regex, tagName, className, hitStyle) {
     var text = node.nodeValue;
     if (!text) return;
 
@@ -203,6 +251,7 @@
       var mark = doc.createElement(tagName);
       mark.className = className;
       try { mark.setAttribute(HIT_ATTRIBUTE, '1'); } catch (_) {}
+      applyHitStyle(mark, hitStyle);
       mark.appendChild(doc.createTextNode(match[0]));
       frag.appendChild(mark);
       last = end;
@@ -275,7 +324,7 @@
 
       var nodes = collectTextNodes(tbody);
       for (var i = 0; i < nodes.length; i++) {
-        highlightTextNode(nodes[i], regex, tagName, className);
+        highlightTextNode(nodes[i], regex, tagName, className, opts.hitStyle);
       }
     } catch (_) {}
   }
@@ -285,6 +334,10 @@
     init: function (tableId, opts, tableApi) {
       var options = normalizeOptions(opts);
       this.configurations[tableId] = { opts: options, table: tableApi };
+      try {
+        var tableEl = tableApi && tableApi.table && tableApi.table().node ? tableApi.table().node() : null;
+        if (tableEl) applyCssVars(tableEl, options.cssVars);
+      } catch (_) {}
       this.setupEventHandlers(tableId, tableApi);
     },
     setupEventHandlers: function (tableId, api) {

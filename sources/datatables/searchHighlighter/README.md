@@ -29,7 +29,22 @@ $('#table').DataTable({
     caseSensitive: false,
     includeColumnSearch: true,
     tag: 'mark',
-    className: 'hfx-dt-search-hit'
+    className: 'hfx-dt-search-hit',
+    // Optional: style hits inline (similar concept to ColumnHighlighter targets)
+    hitStyle: {
+      backgroundColor: 'rgba(255, 230, 170, 0.9)',
+      textColor: '#000',
+      css: {
+        'border-radius': '3px',
+        'padding': '0 2px'
+      }
+    },
+    // Optional: set CSS variables on the table element (consumed by the default CSS)
+    cssVars: {
+      '--hfx-dt-search-hit-bg': 'rgba(180, 215, 255, 0.85)',
+      '--hfx-dt-search-hit-color': '#000',
+      '--hfx-dt-search-hit-radius': '2px'
+    }
   }
 });
 ```
@@ -43,6 +58,11 @@ $('#table').DataTable({
 - `includeColumnSearch` (bool, default `true`)
 - `tag` (`mark` | `span`, default `mark`)
 - `className` (string, default `hfx-dt-search-hit`)
+- `hitStyle` (object, optional) — inline styles for each hit:
+  - `backgroundColor` (string)
+  - `textColor` (string) (alias: `color`)
+  - `css` (object) arbitrary CSS properties via `style.setProperty(...)` (supports kebab-case and CSS vars)
+- `cssVars` (object, optional) — applied on the table element (keys must start with `--`)
 
 ## Styling
 
