@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>DataTables Column Highlighter — HTML DateTime</title>
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
+        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+        <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+        <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
+        <link rel="stylesheet" href="../assets/site.css" />
+        <script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
+        <script data-cfasync="false" src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+        <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+        <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 10px;
+            }
+            .example-notes { margin-top: 18px; }
+            .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+            pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
+        </style>
+        <script>
+            $(function () {
+                // Any date strictly before this threshold is highlighted.
+                var threshold = { year: 2025, month: 1, day: 5, hours: 0, minutes: 0, seconds: 0 };
+
+                $('#demoHtmlDatetime').DataTable({
+                    responsive: { details: { type: 'inline' } },
+                    columnHighlighter: {
+                        rules: [
+                            // 1) EU "dd/MM/yyyy HH:mm:ss" with a common typo "dd/MM/YYYY"
+                            {
+                                conditionsContainer: [
+                                    {
+                                        logic: 'AND',
+                                        conditions: [
+                                            {
+                                                columnName: 'EU Slash',
+                                                operator: 'lt',
+                                                type: 'date',
+                                                valueDate: threshold,
+                                                dateTimeFormat: 'dd/MM/YYYY HH:mm:ss'
+                                            }
+                                        ]
+                                    }
+                                ],
+                                targets: [
+                                    { column: 'EU Slash', css: { 'background-color': '#ffdddd', color: '#000' } }
+                                ]
+                            },
+                            // 2) EU "dd.MM.yyyy HH:mm:ss" (PowerShell/.NET style format string)
+                            {
+                                conditionsContainer: [
+                                    {
+                                        logic: 'AND',
+                                        conditions: [
+                                            {
+                                                columnName: 'EU Dot',
+                                                operator: 'lt',
+                                                type: 'date',
+                                                valueDate: threshold,
+                                                dateTimeFormat: 'dd.MM.yyyy HH:mm:ss'
+                                            }
+                                        ]
+                                    }
+                                ],
+                                targets: [
+                                    { column: 'EU Dot', css: { 'background-color': '#fff2cc', color: '#000' } }
+                                ]
+                            },
+                            // 3) US "M/D/YYYY HH:mm:ss" (moment-style format string, also supported without moment.js loaded)
+                            {
+                                conditionsContainer: [
+                                    {
+                                        logic: 'AND',
+                                        conditions: [
+                                            {
+                                                columnName: 'US',
+                                                operator: 'lt',
+                                                type: 'date',
+                                                valueDate: threshold,
+                                                dateTimeFormat: 'M/D/YYYY HH:mm:ss'
+                                            }
+                                        ]
+                                    }
+                                ],
+                                targets: [
+                                    { column: 'US', css: { 'background-color': '#d9e8ff', color: '#000' } }
+                                ]
+                            },
+                            // 4) ISO strings can be parsed by the browser (no format needed)
+                            {
+                                conditionsContainer: [
+                                    {
+                                        logic: 'AND',
+                                        conditions: [
+                                            {
+                                                columnName: 'ISO (UTC)',
+                                                operator: 'lt',
+                                                type: 'date',
+                                                valueDate: threshold
+                                            }
+                                        ]
+                                    }
+                                ],
+                                targets: [
+                                    { column: 'ISO (UTC)', css: { 'background-color': '#d8f5d8', color: '#000' } }
+                                ]
+                            }
+                        ]
+                    }
+                });
+            });
+        </script>
+    </head>
+
+    <body>
+        <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/columnHighlighter/README.md"></script>
+        <h2>HTML — DateTime Comparisons</h2>
+        <table id="demoHtmlDatetime" class="display compact" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>EU Slash</th>
+                    <th>EU Dot</th>
+                    <th>US</th>
+                    <th>ISO (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Before threshold</td>
+                    <td>31/12/2024 23:59:59</td>
+                    <td>31.12.2024 23:59:59</td>
+                    <td>12/31/2024 23:59:59</td>
+                    <td>2024-12-31T23:59:59Z</td>
+                </tr>
+                <tr>
+                    <td>Equal to threshold</td>
+                    <td>05/01/2025 00:00:00</td>
+                    <td>05.01.2025 00:00:00</td>
+                    <td>1/5/2025 00:00:00</td>
+                    <td>2025-01-05T00:00:00Z</td>
+                </tr>
+                <tr>
+                    <td>After threshold</td>
+                    <td>06/01/2025 00:00:00</td>
+                    <td>06.01.2025 00:00:00</td>
+                    <td>1/6/2025 00:00:00</td>
+                    <td>2025-01-06T00:00:00Z</td>
+                </tr>
+                <tr>
+                    <td>Missing / empty</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <section class="example-notes">
+            <h3>About this example</h3>
+            <p>
+                Demonstrates <code>type: 'date'</code> comparisons on an <strong>HTML</strong> DataTable. Each column uses a different
+                input format (including common PowerShell/.NET style formats) while using the same threshold date.
+            </p>
+
+            <h3>Configuration (rules excerpt)</h3>
+<pre><code class="language-js">var threshold = { year: 2025, month: 1, day: 5, hours: 0, minutes: 0, seconds: 0 };
+
+columnHighlighter: {
+  rules: [
+    {
+      conditionsContainer: [
+        {
+          logic: 'AND',
+          conditions: [
+            {
+              columnName: 'EU Slash',
+              operator: 'lt',
+              type: 'date',
+              valueDate: threshold,
+              dateTimeFormat: 'dd/MM/YYYY HH:mm:ss'
+            }
+          ]
+        }
+      ],
+      targets: [
+        { column: 'EU Slash', css: { 'background-color': '#ffdddd', color: '#000' } }
+      ]
+    }
+  ]
+}</code></pre>
+        </section>
+    </body>
+
+</html>

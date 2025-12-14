@@ -62,7 +62,10 @@ Each condition supports:
 - `value`: scalar or array; for `date` use `valueDate`
 - `valueDate`: `{ year, month, day, hours, minutes, seconds }` or array of those
 - `caseSensitive`: `true/false` (for `string`)
-- `dateTimeFormat`: string used by `moment` (if included) for date parsing
+- `dateTimeFormat`: optional input format used for date parsing
+  - When `moment` is available, the plugin parses strictly with `moment(value, [formats], true)` (with a few tolerant fallbacks).
+  - Without `moment`, a lightweight parser handles common numeric formats based on `dateTimeFormat`.
+  - Both Moment-style tokens (`DD/MM/YYYY HH:mm:ss`) and common PowerShell/.NET tokens (`dd/MM/yyyy HH:mm:ss`) are accepted.
 - `reverseCondition`: swap left/right for comparisons
 
 Group multiple conditions using `conditionsContainer` blocks with `logic` set to `AND`, `OR`, or `NONE`.
@@ -87,6 +90,8 @@ If you prefer to attach rules in code instead of options:
 - `final-html-simple.html` — HTML table, simple rule
 - `final-html-and.html` — HTML table, AND group
 - `final-html-advanced.html` — HTML table, responsive demo with multiple rules, fail targets, styles
+- `final-html-datetime.html` — HTML table, date comparisons across formats
 - `final-js-simple.html` — JavaScript data, simple rule
 - `final-js-and.html` — JavaScript data, AND group
 - `final-js-advanced.html` — JavaScript data, responsive demo with multiple rules, fail targets, styles
+- `final-js-datetime.html` — JavaScript data, date comparisons across formats

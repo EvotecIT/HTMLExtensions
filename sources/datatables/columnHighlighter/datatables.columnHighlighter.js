@@ -36,6 +36,247 @@
         return isNaN(n) ? undefined : n;
     }
 
+    function isValidDate(d) {
+        return d instanceof Date && !isNaN(d.valueOf());
+    }
+
+    function uniqPush(arr, value) {
+        if (!value) return;
+        if (arr.indexOf(value) === -1) arr.push(value);
+    }
+
+    // Converts common .NET / PowerShell date format tokens to Moment-compatible tokens.
+    // Also converts .NET quoted literals ('...') into Moment literals ([...]) so letters don't get interpreted as tokens.
+    function dotNetToMomentFormat(fmt) {
+        if (!fmt || typeof fmt !== 'string') return fmt;
+        var out = '';
+        var i = 0;
+        while (i < fmt.length) {
+            var ch = fmt[i];
+
+            // .NET literal: '...'
+            if (ch === "'") {
+                var j = i + 1;
+                var lit = '';
+                while (j < fmt.length) {
+                    if (fmt[j] === "'") {
+                        // Escaped single quote: ''
+                        if (j + 1 < fmt.length && fmt[j + 1] === "'") {
+                            lit += "'";
+                            j += 2;
+                            continue;
+                        }
+                        break;
+                    }
+                    lit += fmt[j];
+                    j++;
+                }
+                // consume closing quote if present
+                if (j < fmt.length && fmt[j] === "'") j++;
+                out += '[' + lit + ']';
+                i = j;
+                continue;
+            }
+
+            // .NET escape: \x (treat x as literal)
+            if (ch === '\\') {
+                if (i + 1 < fmt.length) {
+                    out += '[' + fmt[i + 1] + ']';
+                    i += 2;
+                } else {
+                    i++;
+                }
+                continue;
+            }
+
+            // Token runs (same letter repeated)
+            if (/[A-Za-z]/.test(ch)) {
+                var k = i + 1;
+                while (k < fmt.length && fmt[k] === ch) k++;
+                var token = fmt.slice(i, k);
+                var c = token.charAt(0);
+                var len = token.length;
+
+                if (c === 'y') {
+                    out += (len <= 2) ? 'YY' : 'YYYY';
+                } else if (c === 'd') {
+                    // dd = day-of-month in .NET, but dd = weekday in Moment; map only 1-2 to day-of-month.
+                    out += (len <= 2) ? (len === 2 ? 'DD' : 'D') : token;
+                } else if (c === 'f' || c === 'F') {
+                    out += (len === 1) ? 'S' : (len === 2 ? 'SS' : 'SSS');
+                } else if (c === 't') {
+                    // AM/PM designator
+                    out += 'A';
+                } else if (c === 'K') {
+                    out += 'Z';
+                } else if (c === 'z') {
+                    out += 'Z';
+                } else {
+                    out += token;
+                }
+
+                i = k;
+                continue;
+            }
+
+            out += ch;
+            i++;
+        }
+        return out;
+    }
+
+    function buildDateFormatCandidates(fmt) {
+        var candidates = [];
+        if (!fmt || typeof fmt !== 'string') return candidates;
+        var base = fmt.trim();
+        if (!base) return candidates;
+
+        uniqPush(candidates, base);
+        var normalized = dotNetToMomentFormat(base);
+        if (normalized && normalized !== base) uniqPush(candidates, normalized);
+
+        // Common user typos: dd -> DD, yyyy -> YYYY (even when already "moment-like")
+        var quickFix = base
+            .replace(/(^|[^d])dd([^d]|$)/g, '$1DD$2')
+            .replace(/(^|[^d])d([^d]|$)/g, '$1D$2')
+            .replace(/(^|[^y])yyyy([^y]|$)/g, '$1YYYY$2')
+            .replace(/(^|[^y])yyy([^y]|$)/g, '$1YYYY$2')
+            .replace(/(^|[^y])yy([^y]|$)/g, '$1YY$2')
+            .replace(/tt/g, 'A')
+            .replace(/f{3}/g, 'SSS')
+            .replace(/f{2}/g, 'SS')
+            .replace(/f/g, 'S');
+        if (quickFix && quickFix !== base) uniqPush(candidates, quickFix);
+
+        var normalizedFix = dotNetToMomentFormat(quickFix);
+        if (normalizedFix && candidates.indexOf(normalizedFix) === -1) uniqPush(candidates, normalizedFix);
+
+        return candidates;
+    }
+
+    function hasTimezoneOffset(s) {
+        if (!s) return false;
+        // ISO Z or numeric offsets like +02:00 / -0500
+        return /[zZ]$/.test(s) || /[+-]\d{2}:?\d{2}$/.test(s);
+    }
+
+    function detectDateOrder(fmt) {
+        if (!fmt || typeof fmt !== 'string') return null;
+        var normalized = dotNetToMomentFormat(fmt);
+        // Remove moment literals ([...]) so we don't match tokens inside literal text
+        try { normalized = normalized.replace(/\[[^\]]*\]/g, ''); } catch (_) { /* noop */ }
+
+        var idxY = normalized.search(/Y{2,4}/);
+        var idxM = normalized.search(/M{1,4}/);
+        var idxD = normalized.search(/D{1,2}/);
+        if (idxY === -1 || idxM === -1 || idxD === -1) return null;
+
+        var arr = [{ t: 'Y', i: idxY }, { t: 'M', i: idxM }, { t: 'D', i: idxD }];
+        arr.sort(function (a, b) { return a.i - b.i; });
+        return [arr[0].t, arr[1].t, arr[2].t];
+    }
+
+    function parseDateByFormatHint(value, fmt) {
+        if (!value) return undefined;
+        var s = ('' + value).trim();
+        if (!s) return undefined;
+
+        // If we have timezone information, native parsing is usually best (and respects the offset)
+        if (hasTimezoneOffset(s)) {
+            var dIso = new Date(s);
+            if (isValidDate(dIso)) return dIso;
+        }
+
+        var numsRaw = s.match(/\d+/g);
+        if (!numsRaw || numsRaw.length < 3) return undefined;
+        var nums = numsRaw.map(function (x) { return parseInt(x, 10); });
+
+        var order = detectDateOrder(fmt);
+        if (!order) {
+            // Best-effort inference when format is missing or unrecognizable
+            if (numsRaw[0] && numsRaw[0].length === 4) order = ['Y', 'M', 'D'];
+            else if (nums[0] > 12) order = ['D', 'M', 'Y'];
+            else if (nums[1] > 12) order = ['M', 'D', 'Y'];
+            else order = null;
+        }
+        if (!order) return undefined;
+
+        var map = {};
+        map[order[0]] = nums[0];
+        map[order[1]] = nums[1];
+        map[order[2]] = nums[2];
+
+        var year = map.Y, month = map.M, day = map.D;
+        if (typeof year !== 'number' || typeof month !== 'number' || typeof day !== 'number') return undefined;
+
+        // Two-digit year handling (match Moment's pivot-ish behavior)
+        if (year < 100) {
+            year = (year >= 68) ? (1900 + year) : (2000 + year);
+        }
+
+        var hour = nums.length > 3 ? nums[3] : 0;
+        var minute = nums.length > 4 ? nums[4] : 0;
+        var second = nums.length > 5 ? nums[5] : 0;
+        var ms = 0;
+        if (nums.length > 6) {
+            // Use the first 3 digits of the next group as milliseconds (covers 3/6/7 digit fractions from .NET)
+            var msStr = '' + numsRaw[6];
+            ms = parseInt(msStr.substring(0, 3), 10);
+            if (isNaN(ms)) ms = 0;
+        }
+
+        // Handle 12h clocks with AM/PM
+        var normalized = dotNetToMomentFormat(fmt || '');
+        var uses12h = normalized && normalized.indexOf('h') !== -1 && normalized.indexOf('H') === -1;
+        var hasMeridiem = normalized && normalized.indexOf('A') !== -1;
+        if (uses12h || hasMeridiem) {
+            var upper = s.toUpperCase();
+            if (upper.indexOf('PM') !== -1 && hour < 12) hour += 12;
+            if (upper.indexOf('AM') !== -1 && hour === 12) hour = 0;
+        }
+
+        var d = new Date(year, month - 1, day, hour, minute, second, ms);
+        return isValidDate(d) ? d : undefined;
+    }
+
+    function parseDateValue(value, fmt) {
+        if (value === null || value === undefined) return undefined;
+
+        if (value instanceof Date) return value;
+        if (typeof value === 'number') {
+            var dn = new Date(value);
+            return isValidDate(dn) ? dn : undefined;
+        }
+
+        var s = ('' + value).trim();
+        if (!s) return undefined;
+
+        // Prefer Moment.js if available (strict parsing + format candidates)
+        if (typeof moment !== 'undefined') {
+            var candidates = buildDateFormatCandidates(fmt);
+            var m;
+            if (candidates.length > 0) {
+                m = moment(s, candidates, true);
+                if (!m.isValid()) m = moment(s, candidates, false);
+            } else {
+                m = moment(s);
+            }
+            if (m && typeof m.isValid === 'function' && m.isValid()) {
+                return m.toDate();
+            }
+        }
+
+        // When we have a format hint, try our lightweight parser first to avoid locale-dependent native parsing.
+        if (fmt) {
+            var dh = parseDateByFormatHint(s, fmt);
+            if (isValidDate(dh)) return dh;
+        }
+
+        // Fallback to native Date parsing (works well for ISO strings)
+        var d = new Date(s);
+        return isValidDate(d) ? d : undefined;
+    }
+
     function dataTablesCheckCondition(condition, data) {
         var columnName = condition['columnName'];
         var reverseCondition = condition['reverseCondition'];
@@ -89,8 +330,8 @@
                 var vd = condition['valueDate'];
                 conditionValue = new Date(vd.year, vd.month - 1, vd.day, vd.hours, vd.minutes, vd.seconds);
             }
-            var momentConversion = (typeof moment !== 'undefined') ? moment(columnValue, condition['dateTimeFormat']) : columnValue;
-            columnValue = new Date(momentConversion);
+            var parsed = parseDateValue(columnValue, condition['dateTimeFormat']);
+            columnValue = parsed ? parsed : new Date(NaN);
         }
         var left, right; if (reverseCondition) { left = conditionValue; right = columnValue; } else { left = columnValue; right = conditionValue; }
         if (operator == 'eq') { return left == right; }
