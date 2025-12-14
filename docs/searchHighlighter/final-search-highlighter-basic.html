@@ -8,16 +8,26 @@
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css" />
         <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
         <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css" />
+        <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+        <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
         <link rel="stylesheet" href="../assets/site.css" />
         <script data-cfasync="false" src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
         <script data-cfasync="false" src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
         <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
         <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+        <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
         <style>
             body {
                 font-family: Arial, sans-serif;
                 padding: 10px;
             }
+            .example-notes { margin-top: 18px; }
+            .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+            pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
         </style>
         <script>
             $(function () {
@@ -51,7 +61,14 @@
                 <tr><td>carol</td><td>IT</td><td>Incident review: gamma outage</td></tr>
             </tbody>
         </table>
+
+        <section class="example-notes">
+            <h3>Configuration</h3>
+<pre><code class="language-js">$('#demoSearchHighlighterBasic').DataTable({
+  searching: true,
+  searchHighlighter: true
+});</code></pre>
+        </section>
     </body>
 
 </html>
-
