@@ -108,6 +108,10 @@ jobs:
       - name: Publish to npm (Trusted Publishing / OIDC)
         run: |
           if [ -f package.json ]; then
+            # Force OIDC trusted publishing path (ignore any stale token env/registry auth)
+            unset NODE_AUTH_TOKEN || true
+            unset NPM_TOKEN || true
+            npm config delete //registry.npmjs.org/:_authToken || true
             npm publish --provenance --access public
           else
             echo "package.json missing; skipping npm publish."
