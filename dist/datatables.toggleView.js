@@ -1,41 +1,77 @@
 /*!
- HTMLExtensions v0.1.12 — DataTables ColumnHighlighter & ToggleView
- (c) 2011–2025 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2025-12-14T18:58:54.116Z
+ HTMLExtensions v0.1.13 — DataTables ColumnHighlighter & ToggleView
+ (c) 2011–2026 Przemyslaw Klys @ Evotec
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-02-19T08:22:41.867Z
 */
 
-(function (global) {
+(function(global){
   if (global.hfxToggleView) return;
-  function deepClone(obj) {
+
+  function deepClone(obj){
     var $ = global.jQuery || global.$;
     if ($ && $.extend) return $.extend(true, {}, obj);
+    try { return JSON.parse(JSON.stringify(obj)); } catch(e) { return obj; }
+  }
+
+  function labelForMode(mode){
+    return mode === 'ScrollX' ? 'Switch to Responsive' : 'Switch to ScrollX';
+  }
+
+  function hasScrollWrapper(api){
     try {
-      return JSON.parse(JSON.stringify(obj));
-    } catch (e) {
-      return obj;
+      var $ = global.jQuery || global.$;
+      if (!$ || !api || !api.table) return false;
+      var table = api.table().node();
+      if (!table) return false;
+      return $(table).closest('div.dt-scroll-body,div.dataTables_scrollBody').length > 0;
+    } catch(_){ return false; }
+  }
+
+  function resolveResponsiveConfig(init, settings){
+    if (init && init.responsiveConfig && typeof init.responsiveConfig === 'object') return init.responsiveConfig;
+    if (init && init.responsive && typeof init.responsive === 'object') return init.responsive;
+    try {
+      var oInit = settings && settings.oInit ? settings.oInit : null;
+      if (oInit && oInit.responsive && typeof oInit.responsive === 'object') return deepClone(oInit.responsive);
+    } catch(_){}
+    return { details: { type: 'inline' } };
+  }
+
+  function detectMode(api, initFallback){
+    try {
+      var st = api.settings ? api.settings()[0] : null;
+      var scrollInit = !!(st && st.oInit && st.oInit.scrollX === true);
+      var responsiveConfigured = !!(st && st.oInit && st.oInit.responsive && st.oInit.responsive !== false);
+      if (hasScrollWrapper(api)) return 'ScrollX';
+      if (scrollInit && !responsiveConfigured) return 'ScrollX';
+      if (responsiveConfigured) return 'Responsive';
+      if (initFallback && initFallback.scrollX === true) return 'ScrollX';
+      return 'Responsive';
+    } catch(_){
+      return (initFallback && initFallback.scrollX === true) ? 'ScrollX' : 'Responsive';
     }
   }
-  function rebindHighlighter(tableId, api) {
+
+  function rebindHighlighter(tableId, api){
     try {
       var CH = global.DataTablesColumnHighlighter;
       if (!CH || !CH.configurations) return;
       var cfg = CH.configurations[tableId];
       if (!cfg) return;
-      // Update bound api and rewire events
       cfg.table = api;
       if (CH.setupEventHandlers) CH.setupEventHandlers(tableId, api);
-      // Re-apply for visible rows
-      setTimeout(function () {
+      setTimeout(function(){
         try {
-          api.rows({ page: 'current' }).every(function () {
+          api.rows({ page: 'current' }).every(function(){
             var tr = this.node();
             CH.applyHighlighting(tableId, (global.jQuery || global.$)(tr), this.data());
           });
-        } catch (_) {}
+        } catch(_){}
       }, 0);
-    } catch (_) {}
+    } catch(_){}
   }
-  function preserveState(api) {
+
+  function preserveState(api){
     var state = {};
     try {
       state.page = api.page();
@@ -43,199 +79,138 @@
       state.search = api.search();
       state.colSearch = [];
       state.colVisible = [];
-      api.columns().every(function (idx) {
+      api.columns().every(function(idx){
         state.colSearch[idx] = this.search();
         state.colVisible[idx] = this.visible();
       });
-    } catch (_) {}
+    } catch(_){ }
     return state;
   }
-  function restoreState(api, state) {
+
+  function restoreState(api, state){
     try {
       if (!state) return;
-      if (Array.isArray(state.colVisible))
-        state.colVisible.forEach(function (v, i) {
-          api.column(i).visible(v, false);
-        });
+      if (Array.isArray(state.colVisible)) state.colVisible.forEach(function(v, i){ api.column(i).visible(v, false); });
       if (typeof state.search === 'string') api.search(state.search, false, false);
-      if (Array.isArray(state.colSearch))
-        state.colSearch.forEach(function (v, i) {
-          if (typeof v === 'string') api.column(i).search(v, false, false);
-        });
+      if (Array.isArray(state.colSearch)) state.colSearch.forEach(function(v, i){ if (typeof v === 'string') api.column(i).search(v, false, false); });
       if (Array.isArray(state.order)) api.order(state.order);
       if (typeof state.page === 'number') api.page(state.page);
       api.columns.adjust().draw(false);
-    } catch (_) {}
+    } catch(_){ }
   }
-  function toggle(api) {
+
+  function updateToggleButtonLabel(api){
+    try {
+      var mode = detectMode(api, api && api.init ? api.init() : null);
+      if (api.button) api.button('.buttons-toggle-view').text(labelForMode(mode));
+    } catch(_){}
+  }
+
+  function toggle(api){
     var $ = global.jQuery || global.$;
     if (!$) return;
+
     var table = api.table().node();
     var id = table && table.id ? table.id : null;
-    var init = deepClone(api.init());
-    var isResponsive = !!api.settings()[0].responsive;
-    var isScrollX = init && init.scrollX === true;
+    var init = deepClone(api.init ? api.init() : {});
+    var st = api.settings ? api.settings()[0] : null;
+    var modeBefore = detectMode(api, init);
     var state = preserveState(api);
+    var responsiveCfg = resolveResponsiveConfig(init, st);
 
-    // Tear down instance but keep DOM intact
     api.destroy();
 
-    // Prepare options
-    if (isResponsive) {
-      if (!init.responsiveConfig && init.responsive) init.responsiveConfig = init.responsive;
+    if (modeBefore === 'Responsive'){
+      init.responsiveConfig = responsiveCfg;
       init.responsive = false;
       init.scrollX = true;
+      init.autoWidth = true;
     } else {
       init.scrollX = false;
-      init.responsive = init.responsiveConfig || { details: { type: 'inline' } };
+      init.autoWidth = false;
+      init.responsive = responsiveCfg || { details: { type: 'inline' } };
     }
 
     var newApi = $(table).DataTable(init);
+    var modeAfter = detectMode(newApi, init);
 
-    // Persist mode for HtmlForgeX defaulting (if present)
     try {
-      if (id) {
-        var key = 'hfx:dt:' + id + ':mode';
-        localStorage.setItem(key, isResponsive ? 'ScrollX' : 'Responsive');
-      }
-    } catch (_) {}
+      if (id) localStorage.setItem('hfx:dt:' + id + ':mode', modeAfter);
+    } catch(_){}
 
-    // Rebind highlighting (if present)
     if (id) rebindHighlighter(id, newApi);
-
-    // Restore state
     restoreState(newApi, state);
 
-    // Align widths / toolbar and refresh toggle button label if present
-    try {
-      if (global.hfxDt) global.hfxDt.applyViewportAndToolbar(newApi);
-    } catch (_) {}
-    try {
-      var st = newApi.settings()[0];
-      var isScroll = !!(st && st.oInit && st.oInit.scrollX);
-      var label = isScroll ? 'Switch to Responsive' : 'Switch to ScrollX';
-      if (newApi.button) newApi.button('.buttons-toggle-view').text(label);
-    } catch (_) {}
+    try { if (global.hfxDt) global.hfxDt.applyViewportAndToolbar(newApi); } catch(_){}
+    updateToggleButtonLabel(newApi);
 
     return newApi;
   }
+
+  global.hfxToggleViewMode = detectMode;
+  global.hfxToggleViewLabel = labelForMode;
   global.hfxToggleView = toggle;
-  // Optional: declarative trigger using [data-hfx-toggle="#tableId"]
+
   try {
     var $ = global.jQuery || global.$;
     if ($ && $.fn && $.fn.on) {
-      $(function () {
-        $('body').on('click', '[data-hfx-toggle]', function () {
+      $(function(){
+        $('body').on('click', '[data-hfx-toggle]', function(){
           try {
             var sel = $(this).attr('data-hfx-toggle');
             if (!sel) return;
             var api = $(sel).DataTable();
             if (!api) return;
             var newApi = toggle(api) || api;
-            // If the triggering element wants auto label, flip it
-            var st = newApi.settings()[0];
-            var isScroll = !!(st && st.oInit && st.oInit.scrollX);
-            $(this).text(isScroll ? 'Switch to Responsive' : 'Switch to ScrollX');
-          } catch (_) {}
+            var mode = detectMode(newApi, newApi && newApi.init ? newApi.init() : null);
+            $(this).text(labelForMode(mode));
+          } catch(_){}
         });
       });
     }
-  } catch (_) {}
+  } catch(_){}
 })(window);
 
-// DataTables Buttons integration for the toggle helper (kept in same file for simplicity)
-(function (factory) {
+// DataTables Buttons integration (UMD-friendly): register 'toggleView' when Buttons is present.
+(function(factory){
   if (typeof define === 'function' && define.amd) {
-    define(['jquery', 'datatables.net', 'datatables.net-buttons'], function ($) {
-      return factory($, window, document);
-    });
+    define(['jquery','datatables.net','datatables.net-buttons'], function($){ return factory($, window, document); });
   } else if (typeof exports === 'object') {
-    module.exports = function (root, $) {
+    module.exports = function(root, $) {
       root = root || window;
       $ = $ || require('jquery')(root);
-      if (!$.fn.dataTable) {
-        require('datatables.net')(root, $);
-      }
-      if (!$.fn.dataTable.Buttons) {
-        require('datatables.net-buttons')(root, $);
-      }
+      if (!$.fn.dataTable) { require('datatables.net')(root, $); }
+      if (!$.fn.dataTable.Buttons) { require('datatables.net-buttons')(root, $); }
       return factory($, root, root.document);
     };
   } else {
     factory(jQuery, window, document);
   }
-})(function ($, window) {
+}(function($, window){
   'use strict';
-  var DataTable = $.fn.dataTable;
-  if (!DataTable || !DataTable.ext || !DataTable.ext.buttons) return;
-  var def = {
-    className: 'buttons-toggle-view',
-    text: function (dt) {
-      try {
-        var st = dt.settings()[0];
-        var scroll = !!(st && st.oInit && st.oInit.scrollX);
-        return scroll ? 'Switch to Responsive' : 'Switch to ScrollX';
-      } catch (e) {
-        return 'Switch View';
-      }
-    },
-    action: function (e, dt) {
-      var api = (window.hfxToggleView ? window.hfxToggleView(dt) : dt) || dt;
-      try {
-        var st = api.settings()[0];
-        var scroll = !!(st && st.oInit && st.oInit.scrollX);
-        var label = scroll ? 'Switch to Responsive' : 'Switch to ScrollX';
-        api.button('.buttons-toggle-view').text(label);
-      } catch (_) {}
-    },
-  };
-  $.extend(DataTable.ext.buttons, { toggleView: def, hfxToggleView: def });
-});
 
-// Buttons integration (UMD-friendly): register 'toggleView' if Buttons is present
-(function (factory) {
-  if (typeof define === 'function' && define.amd) {
-    define(['jquery', 'datatables.net', 'datatables.net-buttons'], function ($) {
-      return factory($, window, document);
-    });
-  } else if (typeof exports === 'object') {
-    module.exports = function (root, $) {
-      root = root || window;
-      $ = $ || require('jquery')(root);
-      if (!$.fn.dataTable) {
-        require('datatables.net')(root, $);
-      }
-      if (!$.fn.dataTable.Buttons) {
-        require('datatables.net-buttons')(root, $);
-      }
-      return factory($, root, root.document);
-    };
-  } else {
-    factory(jQuery, window, document);
-  }
-})(function ($) {
   var DataTable = $.fn.dataTable;
   if (!DataTable || !DataTable.ext || !DataTable.ext.buttons) return;
+
   var def = {
     className: 'buttons-toggle-view',
-    text: function (dt) {
+    text: function(dt){
       try {
-        var st = dt.settings()[0];
-        var scroll = !!(st && st.oInit && st.oInit.scrollX);
-        return scroll ? 'Switch to Responsive' : 'Switch to ScrollX';
-      } catch (e) {
+        var mode = window.hfxToggleViewMode ? window.hfxToggleViewMode(dt, dt.init ? dt.init() : null) : 'Responsive';
+        return window.hfxToggleViewLabel ? window.hfxToggleViewLabel(mode) : 'Switch View';
+      } catch(_){
         return 'Switch View';
       }
     },
-    action: function (e, dt) {
+    action: function(e, dt){
       var api = (window.hfxToggleView ? window.hfxToggleView(dt) : dt) || dt;
       try {
-        var st = api.settings()[0];
-        var scroll = !!(st && st.oInit && st.oInit.scrollX);
-        var label = scroll ? 'Switch to Responsive' : 'Switch to ScrollX';
-        api.button('.buttons-toggle-view').text(label);
-      } catch (_) {}
-    },
+        var mode = window.hfxToggleViewMode ? window.hfxToggleViewMode(api, api.init ? api.init() : null) : 'Responsive';
+        var label = window.hfxToggleViewLabel ? window.hfxToggleViewLabel(mode) : 'Switch View';
+        if (api.button) api.button('.buttons-toggle-view').text(label);
+      } catch(_){}
+    }
   };
+
   $.extend(DataTable.ext.buttons, { toggleView: def, hfxToggleView: def });
-});
+}));
