@@ -15,7 +15,7 @@
     // - cssVars: apply CSS variables on the table element (e.g. --hfx-dt-search-hit-bg)
     // - hitStyle: inline styles applied to each hit (similar shape to ColumnHighlighter targets)
     cssVars: null,
-    hitStyle: null
+    hitStyle: null,
   };
 
   function escapeRegex(s) {
@@ -106,7 +106,9 @@
         if (key.indexOf('--') !== 0) return;
         var v = vars[k];
         if (v === undefined || v === null) return;
-        try { element.style.setProperty(key, '' + v); } catch (_) {}
+        try {
+          element.style.setProperty(key, '' + v);
+        } catch (_) {}
       });
     } catch (_) {}
   }
@@ -116,7 +118,11 @@
     if (!hitStyle || typeof hitStyle !== 'object') return;
 
     try {
-      if (hitStyle.backgroundColor !== undefined && hitStyle.backgroundColor !== null && hitStyle.backgroundColor !== '') {
+      if (
+        hitStyle.backgroundColor !== undefined &&
+        hitStyle.backgroundColor !== null &&
+        hitStyle.backgroundColor !== ''
+      ) {
         element.style.backgroundColor = '' + hitStyle.backgroundColor;
       }
 
@@ -132,7 +138,9 @@
           if (!k) return;
           var v = hitStyle.css[k];
           if (v === undefined || v === null) return;
-          try { element.style.setProperty(k, '' + v); } catch (_) {}
+          try {
+            element.style.setProperty(k, '' + v);
+          } catch (_) {}
         });
       }
     } catch (_) {}
@@ -148,7 +156,7 @@
         var el = marksByAttr[i];
         var parent = el.parentNode;
         if (!parent) continue;
-        var text = (el.textContent || '');
+        var text = el.textContent || '';
         parent.replaceChild(root.ownerDocument.createTextNode(text), el);
       }
     } catch (_) {}
@@ -163,19 +171,24 @@
           if (!node || !node.classList) continue;
           var ok = true;
           for (var t = 0; t < tokens.length; t++) {
-            if (!node.classList.contains(tokens[t])) { ok = false; break; }
+            if (!node.classList.contains(tokens[t])) {
+              ok = false;
+              break;
+            }
           }
           if (!ok) continue;
           var p = node.parentNode;
           if (!p) continue;
-          var txt = (node.textContent || '');
+          var txt = node.textContent || '';
           p.replaceChild(root.ownerDocument.createTextNode(txt), node);
         }
       } catch (_) {}
     }
 
     // Merge adjacent text nodes introduced by replacements.
-    try { if (root.normalize) root.normalize(); } catch (_) {}
+    try {
+      if (root.normalize) root.normalize();
+    } catch (_) {}
   }
 
   function shouldSkipTextNode(node) {
@@ -250,7 +263,9 @@
       if (start > last) frag.appendChild(doc.createTextNode(text.slice(last, start)));
       var mark = doc.createElement(tagName);
       mark.className = className;
-      try { mark.setAttribute(HIT_ATTRIBUTE, '1'); } catch (_) {}
+      try {
+        mark.setAttribute(HIT_ATTRIBUTE, '1');
+      } catch (_) {}
       applyHitStyle(mark, hitStyle);
       mark.appendChild(doc.createTextNode(match[0]));
       frag.appendChild(mark);
@@ -299,9 +314,10 @@
 
   function applyHighlighting(tableId) {
     try {
-      var entry = window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
-        ? window.DataTablesSearchHighlighter.configurations[tableId]
-        : null;
+      var entry =
+        window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
+          ? window.DataTablesSearchHighlighter.configurations[tableId]
+          : null;
       if (!entry || !entry.table) return;
       var api = entry.table;
       var opts = entry.opts || DEFAULTS;
@@ -343,15 +359,25 @@
     setupEventHandlers: function (tableId, api) {
       if (!api || !api.on) return;
       try {
-        api.on('draw.dt', function () { applyHighlighting(tableId); });
-        api.on('search.dt', function () { applyHighlighting(tableId); });
-        api.on('column-visibility.dt', function () { applyHighlighting(tableId); });
+        api.on('draw.dt', function () {
+          applyHighlighting(tableId);
+        });
+        api.on('search.dt', function () {
+          applyHighlighting(tableId);
+        });
+        api.on('column-visibility.dt', function () {
+          applyHighlighting(tableId);
+        });
         api.on('responsive-display', function (e, dt, row, showHide) {
           if (showHide) applyHighlighting(tableId);
         });
       } catch (_) {}
-      try { setTimeout(function () { applyHighlighting(tableId); }, 0); } catch (_) {}
-    }
+      try {
+        setTimeout(function () {
+          applyHighlighting(tableId);
+        }, 0);
+      } catch (_) {}
+    },
   };
 
   function autoInitFromSettings(settings) {
@@ -360,9 +386,10 @@
       var tableId = settings && settings.nTable ? settings.nTable.getAttribute('id') : null;
       if (!tableId) return;
 
-      var existing = window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
-        ? window.DataTablesSearchHighlighter.configurations[tableId]
-        : null;
+      var existing =
+        window.DataTablesSearchHighlighter && window.DataTablesSearchHighlighter.configurations
+          ? window.DataTablesSearchHighlighter.configurations[tableId]
+          : null;
       if (existing) return;
 
       var oInit = settings.oInit || {};
@@ -378,8 +405,12 @@
   }
 
   try {
-    jQuery(document).on('preInit.dt', function (e, settings) { autoInitFromSettings(settings); });
-    jQuery(document).on('init.dt', function (e, settings) { autoInitFromSettings(settings); });
+    jQuery(document).on('preInit.dt', function (e, settings) {
+      autoInitFromSettings(settings);
+    });
+    jQuery(document).on('init.dt', function (e, settings) {
+      autoInitFromSettings(settings);
+    });
   } catch (_) {}
 
   try {
@@ -390,7 +421,9 @@
           try {
             var apis = jQuery.fn.dataTable.tables({ api: true });
             apis.every(function () {
-              try { autoInitFromSettings(this.settings()[0]); } catch (_) {}
+              try {
+                autoInitFromSettings(this.settings()[0]);
+              } catch (_) {}
             });
             return apis && apis.count && apis.count() > 0;
           } catch (_) {
@@ -399,7 +432,9 @@
         };
         // One-time scan is usually enough; init/preInit handlers cover late inits.
         doScan();
-        try { setTimeout(doScan, 0); } catch (_) {}
+        try {
+          setTimeout(doScan, 0);
+        } catch (_) {}
       } catch (_) {}
     });
   } catch (_) {}
