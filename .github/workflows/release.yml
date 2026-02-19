@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -104,16 +105,10 @@ jobs:
           name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.version) }}
           files: dist/**
 
-      - name: Publish to npm (only if token present)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm (Trusted Publishing / OIDC)
         run: |
-          if [ -n "$NODE_AUTH_TOKEN" ]; then
-            if [ -f package.json ]; then
-              npm publish --access public || echo "npm publish failed; continuing."
-            else
-              echo "package.json missing; skipping npm publish."
-            fi
+          if [ -f package.json ]; then
+            npm publish --provenance --access public
           else
-            echo "NPM_TOKEN not set — skipping npm publish."
+            echo "package.json missing; skipping npm publish."
           fi
