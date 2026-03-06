@@ -88,6 +88,7 @@ If you prefer to attach rules in code instead of options:
 - `final-html-simple.html` — HTML table, simple rule
 - `final-html-and.html` — HTML table, AND group
 - `final-html-advanced.html` — HTML table, responsive demo with multiple rules, fail targets, styles
+- `final-locale-decimals.html` — HTML and JavaScript tables, dot vs comma decimals, pass/fail threshold matrix
 - `final-js-simple.html` — JavaScript data, simple rule
 - `final-js-and.html` — JavaScript data, AND group
 - `final-js-advanced.html` — JavaScript data, responsive demo with multiple rules, fail targets, styles

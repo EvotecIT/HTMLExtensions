@@ -1,154 +1,260 @@
 <!doctype html>
 <html lang="en">
 
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Locale Decimal Parsing – Dot vs Comma</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
-        <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
-        <style>
-            body {
-                padding: 2rem
-            }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Locale Decimal Parsing - HTML vs JavaScript, Dot vs Comma</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+    <style>
+      body {
+        padding: 2rem;
+      }
 
-            .demo {
-                margin-bottom: 2rem
-            }
-        </style>
-        <script data-cfasync="false" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-        <script data-cfasync="false" src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-        <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-        <!-- Use local dist so we test the patched parser -->
-        <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js"></script>
-    </head>
+      .intro {
+        max-width: 980px;
+      }
 
-    <body>
-        <h1 class="h4 mb-4">Conditional Formatting with Dot and Comma Decimals</h1>
-        <p class="text-muted">Both tables use the same numeric rules. Left uses dot decimals (US style). Right uses comma decimals (EU style). Highlights should match.</p>
+      .demo-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        margin-top: 1.5rem;
+      }
 
-        <div class="row demo">
-            <div class="col-md-6">
-                <h2 class="h6">Dot decimals</h2>
-                <table id="dt-dot" class="table table-striped nowrap" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Value</th>
-                            <th>Delta</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>A</td>
-                            <td>0.95</td>
-                            <td>-0.40</td>
-                        </tr>
-                        <tr>
-                            <td>B</td>
-                            <td>1.25</td>
-                            <td>0.10</td>
-                        </tr>
-                        <tr>
-                            <td>C</td>
-                            <td>2.00</td>
-                            <td>0.50</td>
-                        </tr>
-                        <tr>
-                            <td>D</td>
-                            <td>3.14</td>
-                            <td>-1.00</td>
-                        </tr>
-                        <tr>
-                            <td>E</td>
-                            <td>4.20</td>
-                            <td>0.00</td>
-                        </tr>
-                        <tr>
-                            <td>F</td>
-                            <td>1.500</td>
-                            <td>-0.05</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="col-md-6">
-                <h2 class="h6">Comma decimals</h2>
-                <table id="dt-comma" class="table table-striped nowrap" style="width:100%">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Value</th>
-                            <th>Delta</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>A</td>
-                            <td>0,95</td>
-                            <td>-0,40</td>
-                        </tr>
-                        <tr>
-                            <td>B</td>
-                            <td>1,25</td>
-                            <td>0,10</td>
-                        </tr>
-                        <tr>
-                            <td>C</td>
-                            <td>2,00</td>
-                            <td>0,50</td>
-                        </tr>
-                        <tr>
-                            <td>D</td>
-                            <td>3,14</td>
-                            <td>-1,00</td>
-                        </tr>
-                        <tr>
-                            <td>E</td>
-                            <td>4,20</td>
-                            <td>0,00</td>
-                        </tr>
-                        <tr>
-                            <td>F</td>
-                            <td>1 500,00</td>
-                            <td>-0,05</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+      .demo-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        background: #fff;
+      }
 
-        <script>
-            function buildRules() {
-                return [
-                    // Value >= 2.0 -> green text
-                    {
-                        conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Value', operator: 'ge', type: 'number', value: 2.0 }] }],
-                        targets: [{ column: 'Value', textColor: '#198754' }]
-                    },
-                    // 1.0 <= Value <= 1.5 -> amber background
-                    {
-                        conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Value', operator: 'betweenInclusive', type: 'number', value: [1.0, 1.5] }] }],
-                        targets: [{ column: 'Value', backgroundColor: '#fff3cd', textColor: '#664d03' }]
-                    },
-                    // Value IN (3.14, 4.2) -> primary blue text
-                    {
-                        conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Value', operator: 'in', type: 'number', value: [3.14, 4.2] }] }],
-                        targets: [{ column: 'Value', textColor: '#084298' }]
-                    },
-                    // Delta < 0 -> red text
-                    {
-                        conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Delta', operator: 'lt', type: 'number', value: 0 }] }],
-                        targets: [{ column: 'Delta', textColor: '#dc3545' }]
-                    },
-                ];
-            }
-            $(function () {
-                $('#dt-dot').DataTable({ responsive: true, columnHighlighter: { rules: buildRules() } });
-                $('#dt-comma').DataTable({ responsive: true, columnHighlighter: { rules: buildRules() } });
-            });
-        </script>
-    </body>
+      .demo-card h2 {
+        font-size: 1rem;
+        margin-bottom: 0.35rem;
+      }
+
+      .demo-card p {
+        margin-bottom: 0.75rem;
+      }
+
+      .legend {
+        display: grid;
+        gap: 0.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        margin-top: 1rem;
+      }
+
+      .legend-item {
+        border-radius: 0.5rem;
+        padding: 0.65rem 0.8rem;
+        font-size: 0.95rem;
+      }
+
+      .legend-pass {
+        background: #d1e7dd;
+        color: #0f5132;
+      }
+
+      .legend-fail {
+        background: #f8d7da;
+        color: #842029;
+      }
+
+      .legend-mid {
+        background: #fff3cd;
+        color: #664d03;
+      }
+
+      .legend-negative {
+        background: #cff4fc;
+        color: #055160;
+      }
+    </style>
+    <script data-cfasync="false" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js"></script>
+  </head>
+
+  <body>
+    <div class="intro">
+      <h1 class="h3 mb-3">Locale Decimal Parsing Matrix</h1>
+      <p class="text-muted mb-2">
+        This example checks the same numeric rules across all four combinations people usually ask about:
+        HTML-backed tables vs JavaScript-backed tables, and dot decimals vs comma decimals.
+      </p>
+      <p class="text-muted mb-0">
+        The first row is the important regression check: <strong>0.17</strong> or <strong>0,17</strong> should pass
+        <code>Value &lt;= 0.2</code> and stay green in every table. If it turns red, parsing is wrong somewhere.
+      </p>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item legend-pass"><strong>Green:</strong> Value is <code>&lt;= 0.2</code></div>
+      <div class="legend-item legend-fail"><strong>Red:</strong> Value is greater than <code>0.2</code></div>
+      <div class="legend-item legend-mid"><strong>Amber:</strong> Value is between <code>1.0</code> and <code>1.5</code></div>
+      <div class="legend-item legend-negative"><strong>Blue:</strong> Delta is below <code>0</code></div>
+    </div>
+
+    <div class="demo-grid">
+      <section class="demo-card">
+        <h2>HTML Store - Dot Decimals</h2>
+        <p class="text-muted small">Cell text comes from the DOM using dot decimals.</p>
+        <table id="dt-html-dot" class="table table-striped nowrap" style="width:100%">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Value</th>
+              <th>Delta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Pass threshold</td><td>0.17</td><td>-0.03</td></tr>
+            <tr><td>Fail threshold</td><td>0.25</td><td>0.05</td></tr>
+            <tr><td>Between</td><td>1.25</td><td>0.10</td></tr>
+            <tr><td>Exact list</td><td>3.14</td><td>-1.00</td></tr>
+            <tr><td>Thousands</td><td>1500.00</td><td>0.00</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="demo-card">
+        <h2>HTML Store - Comma Decimals</h2>
+        <p class="text-muted small">Cell text comes from the DOM using comma decimals and a grouped value.</p>
+        <table id="dt-html-comma" class="table table-striped nowrap" style="width:100%">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Value</th>
+              <th>Delta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Pass threshold</td><td>0,17</td><td>-0,03</td></tr>
+            <tr><td>Fail threshold</td><td>0,25</td><td>0,05</td></tr>
+            <tr><td>Between</td><td>1,25</td><td>0,10</td></tr>
+            <tr><td>Exact list</td><td>3,14</td><td>-1,00</td></tr>
+            <tr><td>Thousands</td><td>1 500,00</td><td>0,00</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="demo-card">
+        <h2>JavaScript Store - Raw Numbers</h2>
+        <p class="text-muted small">Underlying data stays numeric objects, not formatted strings.</p>
+        <table id="dt-js-dot" class="table table-striped nowrap" style="width:100%"></table>
+      </section>
+
+      <section class="demo-card">
+        <h2>JavaScript Store - Comma Strings</h2>
+        <p class="text-muted small">Underlying data is string-based and still uses comma decimals.</p>
+        <table id="dt-js-comma" class="table table-striped nowrap" style="width:100%"></table>
+      </section>
+    </div>
+
+    <script>
+      function buildRules() {
+        return [
+          {
+            conditionsContainer: [{
+              logic: 'AND',
+              conditions: [{ columnName: 'Value', operator: 'le', type: 'number', value: 0.2 }]
+            }],
+            targets: [{
+              column: 'Value',
+              css: { 'background-color': '#d1e7dd', color: '#0f5132', 'font-weight': '700' }
+            }],
+            failTargets: [{
+              column: 'Value',
+              css: { 'background-color': '#f8d7da', color: '#842029', 'font-weight': '700' }
+            }]
+          },
+          {
+            conditionsContainer: [{
+              logic: 'AND',
+              conditions: [{ columnName: 'Value', operator: 'betweenInclusive', type: 'number', value: [1.0, 1.5] }]
+            }],
+            targets: [{
+              column: 'Value',
+              css: { 'background-color': '#fff3cd', color: '#664d03', border: '1px solid #ffe69c' }
+            }]
+          },
+          {
+            conditionsContainer: [{
+              logic: 'AND',
+              conditions: [{ columnName: 'Value', operator: 'in', type: 'number', value: [3.14, 4.2] }]
+            }],
+            targets: [{
+              column: 'Value',
+              css: { color: '#084298', 'text-decoration': 'underline' }
+            }]
+          },
+          {
+            conditionsContainer: [{
+              logic: 'AND',
+              conditions: [{ columnName: 'Delta', operator: 'lt', type: 'number', value: 0 }]
+            }],
+            targets: [{
+              column: 'Delta',
+              css: { 'background-color': '#cff4fc', color: '#055160' }
+            }]
+          }
+        ];
+      }
+
+      const jsDotData = [
+        { Item: 'Pass threshold', Value: 0.17, Delta: -0.03 },
+        { Item: 'Fail threshold', Value: 0.25, Delta: 0.05 },
+        { Item: 'Between', Value: 1.25, Delta: 0.10 },
+        { Item: 'Exact list', Value: 3.14, Delta: -1.00 },
+        { Item: 'Thousands', Value: 1500.00, Delta: 0.00 }
+      ];
+
+      const jsCommaData = [
+        { Item: 'Pass threshold', Value: '0,17', Delta: '-0,03' },
+        { Item: 'Fail threshold', Value: '0,25', Delta: '0,05' },
+        { Item: 'Between', Value: '1,25', Delta: '0,10' },
+        { Item: 'Exact list', Value: '3,14', Delta: '-1,00' },
+        { Item: 'Thousands', Value: '1 500,00', Delta: '0,00' }
+      ];
+
+      function buildJsColumns() {
+        return [
+          { data: 'Item', title: 'Item' },
+          { data: 'Value', title: 'Value' },
+          { data: 'Delta', title: 'Delta' }
+        ];
+      }
+
+      $(function () {
+        $('#dt-html-dot').DataTable({
+          responsive: true,
+          columnHighlighter: { rules: buildRules() }
+        });
+
+        $('#dt-html-comma').DataTable({
+          responsive: true,
+          columnHighlighter: { rules: buildRules() }
+        });
+
+        $('#dt-js-dot').DataTable({
+          responsive: true,
+          data: jsDotData,
+          columns: buildJsColumns(),
+          columnHighlighter: { rules: buildRules() }
+        });
+
+        $('#dt-js-comma').DataTable({
+          responsive: true,
+          data: jsCommaData,
+          columns: buildJsColumns(),
+          columnHighlighter: { rules: buildRules() }
+        });
+      });
+    </script>
+  </body>
 
 </html>
