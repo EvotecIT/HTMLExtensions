@@ -3,7 +3,7 @@
 
   function deepClone(obj) {
     var $ = global.jQuery || global.$;
-    if ($ && $.extend) return $.extend(true, {}, obj);
+    if ($ && $.extend) return $.extend(true, Array.isArray(obj) ? [] : {}, obj);
     try {
       return JSON.parse(JSON.stringify(obj));
     } catch (e) {
@@ -76,17 +76,195 @@
   function preserveState(api) {
     var state = {};
     try {
+      var info = api.page && api.page.info ? api.page.info() : null;
+      var dtState = api.state && typeof api.state === 'function' ? api.state() : null;
       state.page = api.page();
+      state.pageLen = api.page && api.page.len ? api.page.len() : null;
+      state.start = info && typeof info.start === 'number' ? info.start : null;
       state.order = api.order();
       state.search = api.search();
+      state.dataTablesState = dtState ? deepClone(dtState) : null;
       state.colSearch = [];
       state.colVisible = [];
       api.columns().every(function (idx) {
         state.colSearch[idx] = this.search();
         state.colVisible[idx] = this.visible();
       });
+      try {
+        state.selectedRowIds =
+          api.rows && api.rows({ selected: true }).ids
+            ? deepClone(api.rows({ selected: true }).ids().toArray())
+            : [];
+      } catch (_) {
+        state.selectedRowIds = [];
+      }
+      try {
+        state.selectedRows = api.rows ? deepClone(api.rows({ selected: true }).indexes().toArray()) : [];
+      } catch (_) {
+        state.selectedRows = [];
+      }
+      try {
+        state.selectedColumns = api.columns
+          ? deepClone(api.columns({ selected: true }).indexes().toArray())
+          : [];
+      } catch (_) {
+        state.selectedColumns = [];
+      }
+      try {
+        state.selectedCells = api.cells ? deepClone(api.cells({ selected: true }).indexes().toArray()) : [];
+      } catch (_) {
+        state.selectedCells = [];
+      }
+      try {
+        state.colReorder = deepClone(
+          api.colReorder && typeof api.colReorder.order === 'function' ? api.colReorder.order() : null
+        );
+      } catch (_) {
+        state.colReorder = null;
+      }
+      try {
+        state.searchBuilder = deepClone(
+          api.searchBuilder && typeof api.searchBuilder.getDetails === 'function'
+            ? api.searchBuilder.getDetails()
+            : null
+        );
+      } catch (_) {
+        state.searchBuilder = null;
+      }
+      try {
+        var st = api.settings ? api.settings()[0] : null;
+        var sp = st && st._searchPanes ? st._searchPanes : null;
+        if (sp && sp.s) {
+          state.searchPanes = {
+            selectionList: deepClone(sp.s.selectionList || []),
+            panes: Array.isArray(sp.s.panes)
+              ? sp.s.panes
+                  .filter(function (pane) {
+                    return !!(pane && pane.s);
+                  })
+                  .map(function (pane) {
+                    return {
+                      id: pane.s.index,
+                      searchTerm:
+                        pane.dom && pane.dom.searchBox && pane.dom.searchBox.val
+                          ? pane.dom.searchBox.val()
+                          : '',
+                      order:
+                        pane.s.dtPane && typeof pane.s.dtPane.order === 'function'
+                          ? deepClone(pane.s.dtPane.order())
+                          : null,
+                    };
+                  })
+              : [],
+          };
+        } else {
+          state.searchPanes = dtState && dtState.searchPanes ? deepClone(dtState.searchPanes) : null;
+        }
+      } catch (_) {
+        state.searchPanes = dtState && dtState.searchPanes ? deepClone(dtState.searchPanes) : null;
+      }
     } catch (_) {}
     return state;
+  }
+
+  function restoreExtensionState(api, state) {
+    try {
+      if (!state) return;
+      if (
+        Array.isArray(state.colReorder) &&
+        api.colReorder &&
+        typeof api.colReorder.order === 'function'
+      ) {
+        api.colReorder.order(state.colReorder, true);
+      }
+    } catch (_) {}
+
+    try {
+      if (
+        state.searchBuilder &&
+        typeof state.searchBuilder === 'object' &&
+        Object.keys(state.searchBuilder).length > 0 &&
+        api.searchBuilder &&
+        typeof api.searchBuilder.rebuild === 'function'
+      ) {
+        api.searchBuilder.rebuild(state.searchBuilder);
+      }
+    } catch (_) {}
+
+    try {
+      var selectedRowIds = Array.isArray(state.selectedRowIds)
+        ? state.selectedRowIds.filter(function (id) {
+            return !!id && id !== '#undefined' && id !== 'undefined';
+          })
+        : [];
+
+      if (selectedRowIds.length > 0 && api.rows && api.rows(selectedRowIds).select) {
+        api.rows(selectedRowIds).select();
+      } else if (Array.isArray(state.selectedRows) && state.selectedRows.length > 0 && api.rows) {
+        api.rows(state.selectedRows).select();
+      }
+    } catch (_) {}
+
+    try {
+      if (Array.isArray(state.selectedColumns) && state.selectedColumns.length > 0 && api.columns) {
+        api.columns(state.selectedColumns).select();
+      }
+    } catch (_) {}
+
+    try {
+      if (Array.isArray(state.selectedCells) && state.selectedCells.length > 0 && api.cells) {
+        api.cells(state.selectedCells).select();
+      }
+    } catch (_) {}
+  }
+
+  function restoreSearchPanesState(api, searchPanesState, attempt) {
+    try {
+      if (!searchPanesState || !api.settings) return;
+
+      var st = api.settings()[0];
+      var sp = st && st._searchPanes ? st._searchPanes : null;
+      var panesReady =
+        sp &&
+        sp.s &&
+        Array.isArray(sp.s.panes) &&
+        sp.s.panes.some(function (pane) {
+          return !!(pane && pane.s && pane.s.dtPane);
+        });
+
+      if (!panesReady) {
+        if ((attempt || 0) < 5) {
+          setTimeout(function () {
+            restoreSearchPanesState(api, searchPanesState, (attempt || 0) + 1);
+          }, 100);
+        }
+        return;
+      }
+
+      if (sp.clearSelections) sp.clearSelections();
+      sp.s = sp.s || {};
+      sp.s.selectionList = Array.isArray(searchPanesState.selectionList)
+        ? deepClone(searchPanesState.selectionList)
+        : [];
+
+      if (Array.isArray(searchPanesState.panes) && Array.isArray(sp.s.panes)) {
+        searchPanesState.panes.forEach(function (paneState) {
+          sp.s.panes.forEach(function (pane) {
+            if (!pane || paneState.id !== pane.s.index || !pane.s.dtPane) return;
+            try {
+              if (pane.dom && pane.dom.searchBox && typeof paneState.searchTerm === 'string') {
+                pane.dom.searchBox.val(paneState.searchTerm);
+              }
+            } catch (_) {}
+            try {
+              if (Array.isArray(paneState.order)) pane.s.dtPane.order(paneState.order);
+            } catch (_) {}
+          });
+        });
+      }
+
+      if (sp._makeSelections) sp._makeSelections(sp.s.selectionList);
+    } catch (_) {}
   }
 
   function restoreState(api, state) {
@@ -102,8 +280,15 @@
           if (typeof v === 'string') api.column(i).search(v, false, false);
         });
       if (Array.isArray(state.order)) api.order(state.order);
-      if (typeof state.page === 'number') api.page(state.page);
+      if (typeof state.pageLen === 'number' && api.page && api.page.len) api.page.len(state.pageLen);
+      if (typeof state.start === 'number' && typeof state.pageLen === 'number' && state.pageLen > 0) {
+        api.page(Math.floor(state.start / state.pageLen));
+      } else if (typeof state.page === 'number') {
+        api.page(state.page);
+      }
+      restoreExtensionState(api, state);
       api.columns.adjust().draw(false);
+      if (state.searchPanes) restoreSearchPanesState(api, state.searchPanes, 0);
     } catch (_) {}
   }
 
