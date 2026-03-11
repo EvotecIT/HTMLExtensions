@@ -1,7 +1,7 @@
 /*!
  HTMLExtensions v0.1.14 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-11T10:27:09.365Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-11T10:41:54.228Z
 */
 
 (function (global) {
@@ -176,11 +176,7 @@
   function restoreExtensionState(api, state) {
     try {
       if (!state) return;
-      if (
-        Array.isArray(state.colReorder) &&
-        api.colReorder &&
-        typeof api.colReorder.order === 'function'
-      ) {
+      if (Array.isArray(state.colReorder) && api.colReorder && typeof api.colReorder.order === 'function') {
         api.colReorder.order(state.colReorder, true);
       }
     } catch (_) {}
