@@ -1,7 +1,7 @@
 /*!
- HTMLExtensions v0.1.16 — DataTables ColumnHighlighter & ToggleView
+ HTMLExtensions v0.1.17 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T11:31:07.316Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:00:36.007Z
 */
 
 (function () {
@@ -22,12 +22,15 @@
     // - hitStyle: inline styles applied to each hit (similar shape to ColumnHighlighter targets)
     // - globalHitStyle: override styling for hits coming from the global DataTables search box
     // - columnHitStyle: override styling for hits coming from per-column filters
-    // - columnHitStyles: per-column override map keyed by column index ("0") or header text ("Status")
+    // - columnHitStyles: per-column override map keyed by column index ("0"), header text ("Status"),
+    //   DataTables column name, header id, or data-column-id
+    // - columnHitStylePalette: reusable array of per-column filter styles applied by column index
     cssVars: null,
     hitStyle: null,
     globalHitStyle: null,
     columnHitStyle: null,
     columnHitStyles: null,
+    columnHitStylePalette: null,
   };
 
   function escapeRegex(s) {
@@ -168,19 +171,56 @@
     }
   }
 
+  function getColumnMeta(api, columnIndex) {
+    var meta = {
+      headerName: '',
+      columnName: '',
+      headerId: '',
+      columnId: '',
+    };
+
+    try {
+      if (columnIndex === undefined || columnIndex === null || !api) return meta;
+      var header = api.column ? api.column(columnIndex).header() : null;
+      var settings = api.settings ? api.settings()[0] : null;
+      var aoColumn = settings && settings.aoColumns && settings.aoColumns[columnIndex] ? settings.aoColumns[columnIndex] : null;
+
+      meta.headerName = header ? (header.textContent || '').trim() : '';
+      meta.columnName = aoColumn && (aoColumn.name || aoColumn.sName) ? (aoColumn.name || aoColumn.sName) : '';
+      meta.headerId = header && header.id ? header.id : '';
+      meta.columnId = header && header.getAttribute ? (header.getAttribute('data-column-id') || '') : '';
+    } catch (_) {}
+
+    return meta;
+  }
+
   function getColumnStyleCandidates(api, columnIndex) {
     var candidates = [];
     if (columnIndex !== undefined && columnIndex !== null && !isNaN(columnIndex)) {
       uniqPush(candidates, '' + columnIndex);
     }
 
-    var headerName = getColumnHeaderName(api, columnIndex);
-    if (headerName) {
-      uniqPush(candidates, headerName);
-      uniqPush(candidates, headerName.toLowerCase());
-    }
+    var meta = getColumnMeta(api, columnIndex);
+    [meta.headerName, meta.columnName, meta.headerId, meta.columnId].forEach(function (value) {
+      if (!value) return;
+      uniqPush(candidates, value);
+      uniqPush(candidates, value.toLowerCase());
+    });
 
     return candidates;
+  }
+
+  function resolvePaletteStyle(opts, columnIndex) {
+    try {
+      var palette = opts && opts.columnHitStylePalette;
+      if (!palette || !palette.length) return null;
+      if (columnIndex === undefined || columnIndex === null || isNaN(columnIndex)) return null;
+      var idx = Number(columnIndex);
+      if (!isFinite(idx) || idx < 0) return null;
+      return palette[idx % palette.length] || null;
+    } catch (_) {
+      return null;
+    }
   }
 
   function resolveColumnHitStyle(api, opts, columnIndex) {
@@ -205,6 +245,9 @@
         }
       } catch (_) {}
     }
+
+    var paletteStyle = resolvePaletteStyle(opts, columnIndex);
+    if (paletteStyle) return paletteStyle;
 
     return (opts && opts.columnHitStyle) || (opts && opts.hitStyle) || null;
   }
@@ -463,14 +506,8 @@
         mark.setAttribute(HIT_ATTRIBUTE, '1');
       } catch (_) {}
       try {
-        if (match.rule && match.rule.source)
-          mark.setAttribute('data-hfx-dt-search-source', match.rule.source);
-        if (
-          match.rule &&
-          match.rule.columnIndex !== undefined &&
-          match.rule.columnIndex !== null &&
-          !isNaN(match.rule.columnIndex)
-        ) {
+        if (match.rule && match.rule.source) mark.setAttribute('data-hfx-dt-search-source', match.rule.source);
+        if (match.rule && match.rule.columnIndex !== undefined && match.rule.columnIndex !== null && !isNaN(match.rule.columnIndex)) {
           mark.setAttribute('data-hfx-dt-search-column', '' + match.rule.columnIndex);
         }
       } catch (_) {}

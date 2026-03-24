@@ -7,8 +7,8 @@ Highlights the active DataTables search terms directly inside cell text (like br
 Include the bundle:
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.16/dist/datatables.searchHighlighter.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.16/dist/datatables.searchHighlighter.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.17/dist/datatables.searchHighlighter.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.17/dist/datatables.searchHighlighter.min.js"></script>
 ```
 
 Enable via DataTables options:
@@ -48,6 +48,12 @@ $('#table').DataTable({
       backgroundColor: '#fef3c7',
       textColor: '#92400e'
     },
+    // Optional: reusable palette by column position
+    columnHitStylePalette: [
+      { backgroundColor: '#fef3c7', textColor: '#92400e' }, // 1st column filter
+      { backgroundColor: '#dbeafe', textColor: '#1e3a8a' }, // 2nd column filter
+      { backgroundColor: '#dcfce7', textColor: '#166534' }  // 3rd column filter
+    ],
     // Optional: per-column override map for filter hits
     columnHitStyles: {
       Status: {
@@ -88,7 +94,8 @@ $('#table').DataTable({
   - `css` (object) arbitrary CSS properties via `style.setProperty(...)` (supports kebab-case and CSS vars)
 - `globalHitStyle` (object, optional) — inline styles for hits produced by the global search box
 - `columnHitStyle` (object, optional) — inline styles for hits produced by per-column filters
-- `columnHitStyles` (object, optional) — per-column override map for filter hits; keys can be header text (`"Status"`) or zero-based column indexes (`"0"`)
+- `columnHitStyles` (object, optional) — per-column override map for filter hits; keys can be header text (`"Status"`), zero-based column indexes (`"0"`), DataTables column names, header ids, or `data-column-id` values
+- `columnHitStylePalette` (array, optional) — reusable filter-hit palette applied by column index; specific `columnHitStyles` entries override the palette
 - `cssVars` (object, optional) — applied on the table element (keys must start with `--`)
 
 ## Styling

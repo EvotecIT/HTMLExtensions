@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
-    <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css?v=0.1.16" />
+    <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css?v=0.1.17" />
     <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
     <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
     <link rel="stylesheet" href="../assets/site.css" />
@@ -20,9 +20,9 @@
     <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script data-cfasync="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
     <script data-cfasync="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
-    <script data-cfasync="false" src="../../dist/datatables.toggleView.js?v=0.1.16"></script>
-    <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js?v=0.1.16"></script>
-    <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js?v=0.1.16"></script>
+    <script data-cfasync="false" src="../../dist/datatables.toggleView.js?v=0.1.17"></script>
+    <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js?v=0.1.17"></script>
+    <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js?v=0.1.17"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
     <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
@@ -373,6 +373,13 @@
               columnHitStyle: {
                 css: { 'border-radius': '3px', 'padding': '0 2px', 'font-weight': '600' }
               },
+              columnHitStylePalette: [
+                { backgroundColor: '#fef3c7', textColor: '#92400e' },
+                { backgroundColor: '#cffafe', textColor: '#155e75' },
+                { backgroundColor: '#ede9fe', textColor: '#5b21b6' },
+                { backgroundColor: '#fde68a', textColor: '#92400e' },
+                { backgroundColor: '#fee2e2', textColor: '#b91c1c' }
+              ],
               columnHitStyles: {
                 Server: {
                   backgroundColor: '#dcfce7',
@@ -403,7 +410,7 @@
     <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/README.MD"></script>
     <div class="narrow">
       <h2>Toggle View — Preserved State Demo</h2>
-      <p class="lead">A full interactive example for switching between <span class="chip warn">ScrollX</span> and Responsive mode while keeping column filters, footer filters, global search, ordering, column visibility, and highlighting intact.</p>
+      <p class="lead">A full interactive example for switching between <span class="chip warn">ScrollX</span> and Responsive mode while keeping column filters, footer filters, global search, ordering, column visibility, and highlighting intact. Global hits, palette-based filter hits, and specific column overrides can all coexist.</p>
 
       <div class="toolbar-row">
         <p>Suggested flow: click <strong>Apply Demo State</strong>, switch to Responsive, switch back to ScrollX, and confirm the toolbar state and visible rows stay consistent.</p>
@@ -466,6 +473,7 @@
       <section class="example-notes">
         <h3>About this demo</h3>
         <p>This page shows a realistic table setup where users may change filters, hide columns, sort by a metric, and then switch layout modes without losing context.</p>
+        <p>Server uses a green named override, Status uses a red named override, and the other filtered columns cycle through the palette by column position while the global search stays blue.</p>
 
         <h3>Core setup</h3>
 <pre><code class="language-js">$('#tblTogglePreservedState').DataTable({
@@ -480,6 +488,11 @@
     minLength: 2,
     globalHitStyle: { /* search box style */ },
     columnHitStyle: { /* shared column-filter style */ },
+    columnHitStylePalette: [
+      { /* 1st filter color */ },
+      { /* 2nd filter color */ },
+      { /* 3rd filter color */ }
+    ],
     columnHitStyles: {
       Server: { /* column-specific filter style */ },
       Status: { /* another column-specific filter style */ }
