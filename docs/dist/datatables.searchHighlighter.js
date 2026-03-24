@@ -1,7 +1,7 @@
 /*!
  HTMLExtensions v0.1.17 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:00:36.007Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:01:34.024Z
 */
 
 (function () {
@@ -183,12 +183,15 @@
       if (columnIndex === undefined || columnIndex === null || !api) return meta;
       var header = api.column ? api.column(columnIndex).header() : null;
       var settings = api.settings ? api.settings()[0] : null;
-      var aoColumn = settings && settings.aoColumns && settings.aoColumns[columnIndex] ? settings.aoColumns[columnIndex] : null;
+      var aoColumn =
+        settings && settings.aoColumns && settings.aoColumns[columnIndex]
+          ? settings.aoColumns[columnIndex]
+          : null;
 
       meta.headerName = header ? (header.textContent || '').trim() : '';
-      meta.columnName = aoColumn && (aoColumn.name || aoColumn.sName) ? (aoColumn.name || aoColumn.sName) : '';
+      meta.columnName = aoColumn && (aoColumn.name || aoColumn.sName) ? aoColumn.name || aoColumn.sName : '';
       meta.headerId = header && header.id ? header.id : '';
-      meta.columnId = header && header.getAttribute ? (header.getAttribute('data-column-id') || '') : '';
+      meta.columnId = header && header.getAttribute ? header.getAttribute('data-column-id') || '' : '';
     } catch (_) {}
 
     return meta;
@@ -506,8 +509,14 @@
         mark.setAttribute(HIT_ATTRIBUTE, '1');
       } catch (_) {}
       try {
-        if (match.rule && match.rule.source) mark.setAttribute('data-hfx-dt-search-source', match.rule.source);
-        if (match.rule && match.rule.columnIndex !== undefined && match.rule.columnIndex !== null && !isNaN(match.rule.columnIndex)) {
+        if (match.rule && match.rule.source)
+          mark.setAttribute('data-hfx-dt-search-source', match.rule.source);
+        if (
+          match.rule &&
+          match.rule.columnIndex !== undefined &&
+          match.rule.columnIndex !== null &&
+          !isNaN(match.rule.columnIndex)
+        ) {
           mark.setAttribute('data-hfx-dt-search-column', '' + match.rule.columnIndex);
         }
       } catch (_) {}

@@ -1,7 +1,7 @@
 /*!
  HTMLExtensions v0.1.17 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:00:36.007Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:01:34.024Z
 */
 
 (function (global) {
@@ -114,9 +114,10 @@
       if (!table) return null;
 
       var $table = $(table);
-      var inCloneSection = $table.closest(
-        'div.dt-scroll-head,div.dataTables_scrollHead,div.dt-scroll-foot,div.dataTables_scrollFoot'
-      ).length > 0;
+      var inCloneSection =
+        $table.closest(
+          'div.dt-scroll-head,div.dataTables_scrollHead,div.dt-scroll-foot,div.dataTables_scrollFoot'
+        ).length > 0;
 
       if (inCloneSection || !table.id || /^DataTables_Table_/i.test(table.id)) {
         var $scroll = $table.closest('div.dt-scroll,div.dataTables_scroll');
@@ -343,11 +344,7 @@
   function restoreExtensionState(api, state) {
     try {
       if (!state) return;
-      if (
-        Array.isArray(state.colReorder) &&
-        api.colReorder &&
-        typeof api.colReorder.order === 'function'
-      ) {
+      if (Array.isArray(state.colReorder) && api.colReorder && typeof api.colReorder.order === 'function') {
         api.colReorder.order(state.colReorder, true);
       }
     } catch (_) {}
@@ -492,13 +489,18 @@
       try {
         api = $table.DataTable();
       } catch (_) {}
-      var container = api && api.table ? $(api.table().container()) : $table.closest('.dt-container, .dataTables_wrapper');
+      var container =
+        api && api.table ? $(api.table().container()) : $table.closest('.dt-container, .dataTables_wrapper');
       var headerReady =
         !includeHeader ||
-        container.find('div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input,thead tr.hfx-header-filter input.hfx-dt-column-filter-input').length > 0;
+        container.find(
+          'div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input,thead tr.hfx-header-filter input.hfx-dt-column-filter-input'
+        ).length > 0;
       var footerReady =
         !includeFooter ||
-        container.find('div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input,tfoot tr.hfx-footer-filter input.hfx-dt-column-filter-input').length > 0;
+        container.find(
+          'div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input,tfoot tr.hfx-footer-filter input.hfx-dt-column-filter-input'
+        ).length > 0;
 
       if ((!headerReady || !footerReady) && (attempt || 0) < 6) {
         setTimeout(function () {
@@ -532,10 +534,14 @@
       var $container = $(api.table().container());
       hadHeaderFilters =
         $container.find('tr.hfx-header-filter').length > 0 ||
-        $container.find('div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input').length > 0;
+        $container.find(
+          'div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input'
+        ).length > 0;
       hadFooterFilters =
         $container.find('tr.hfx-footer-filter').length > 0 ||
-        $container.find('div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input').length > 0;
+        $container.find(
+          'div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input'
+        ).length > 0;
     } catch (_) {}
     var state = preserveState(api);
     var responsiveCfg = resolveResponsiveConfig(init, st);

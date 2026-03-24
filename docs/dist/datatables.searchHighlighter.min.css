@@ -1,10 +1,10 @@
 /*!
  HTMLExtensions v0.1.17 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:00:36.007Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:01:34.024Z
  */
 /*!
  HTMLExtensions v0.1.17 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:00:36.007Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T12:01:34.024Z
 */:root{--hfx-dt-search-hit-bg:rgba(180, 215, 255, 0.85);--hfx-dt-search-hit-color:#000;--hfx-dt-search-hit-radius:2px;--hfx-dt-search-hit-global-bg:var(--hfx-dt-search-hit-bg);--hfx-dt-search-hit-global-color:var(--hfx-dt-search-hit-color);--hfx-dt-search-hit-column-bg:var(--hfx-dt-search-hit-bg);--hfx-dt-search-hit-column-color:var(--hfx-dt-search-hit-color)}mark.hfx-dt-search-hit,span.hfx-dt-search-hit{background:var(--hfx-dt-search-hit-bg);color:var(--hfx-dt-search-hit-color);border-radius:var(--hfx-dt-search-hit-radius);padding:0 1px;box-decoration-break:clone;-webkit-box-decoration-break:clone}mark.hfx-dt-search-hit[data-hfx-dt-search-source=global],span.hfx-dt-search-hit[data-hfx-dt-search-source=global]{background:var(--hfx-dt-search-hit-global-bg);color:var(--hfx-dt-search-hit-global-color)}mark.hfx-dt-search-hit[data-hfx-dt-search-source=column],span.hfx-dt-search-hit[data-hfx-dt-search-source=column]{background:var(--hfx-dt-search-hit-column-bg);color:var(--hfx-dt-search-hit-column-color)}
