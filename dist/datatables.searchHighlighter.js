@@ -1,7 +1,7 @@
 /*!
  HTMLExtensions v0.1.16 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T11:11:00.340Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T11:31:07.316Z
 */
 
 (function () {
@@ -463,8 +463,14 @@
         mark.setAttribute(HIT_ATTRIBUTE, '1');
       } catch (_) {}
       try {
-        if (match.rule && match.rule.source) mark.setAttribute('data-hfx-dt-search-source', match.rule.source);
-        if (match.rule && match.rule.columnIndex !== undefined && match.rule.columnIndex !== null && !isNaN(match.rule.columnIndex)) {
+        if (match.rule && match.rule.source)
+          mark.setAttribute('data-hfx-dt-search-source', match.rule.source);
+        if (
+          match.rule &&
+          match.rule.columnIndex !== undefined &&
+          match.rule.columnIndex !== null &&
+          !isNaN(match.rule.columnIndex)
+        ) {
           mark.setAttribute('data-hfx-dt-search-column', '' + match.rule.columnIndex);
         }
       } catch (_) {}
