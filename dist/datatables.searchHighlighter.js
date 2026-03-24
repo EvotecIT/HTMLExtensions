@@ -1,7 +1,7 @@
 /*!
- HTMLExtensions v0.1.15 — DataTables ColumnHighlighter & ToggleView
+ HTMLExtensions v0.1.16 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T10:55:00.811Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T11:11:00.340Z
 */
 
 (function () {
@@ -20,8 +20,14 @@
     // Optional styling helpers:
     // - cssVars: apply CSS variables on the table element (e.g. --hfx-dt-search-hit-bg)
     // - hitStyle: inline styles applied to each hit (similar shape to ColumnHighlighter targets)
+    // - globalHitStyle: override styling for hits coming from the global DataTables search box
+    // - columnHitStyle: override styling for hits coming from per-column filters
+    // - columnHitStyles: per-column override map keyed by column index ("0") or header text ("Status")
     cssVars: null,
     hitStyle: null,
+    globalHitStyle: null,
+    columnHitStyle: null,
+    columnHitStyles: null,
   };
 
   function escapeRegex(s) {
@@ -152,6 +158,141 @@
     } catch (_) {}
   }
 
+  function getColumnHeaderName(api, columnIndex) {
+    try {
+      if (columnIndex === undefined || columnIndex === null) return '';
+      var header = api && api.column ? api.column(columnIndex).header() : null;
+      return header ? (header.textContent || '').trim() : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  function getColumnStyleCandidates(api, columnIndex) {
+    var candidates = [];
+    if (columnIndex !== undefined && columnIndex !== null && !isNaN(columnIndex)) {
+      uniqPush(candidates, '' + columnIndex);
+    }
+
+    var headerName = getColumnHeaderName(api, columnIndex);
+    if (headerName) {
+      uniqPush(candidates, headerName);
+      uniqPush(candidates, headerName.toLowerCase());
+    }
+
+    return candidates;
+  }
+
+  function resolveColumnHitStyle(api, opts, columnIndex) {
+    var configured = opts && opts.columnHitStyles;
+    if (configured && typeof configured === 'object') {
+      var candidates = getColumnStyleCandidates(api, columnIndex);
+
+      for (var i = 0; i < candidates.length; i++) {
+        if (configured[candidates[i]]) return configured[candidates[i]];
+      }
+
+      try {
+        var configuredKeys = Object.keys(configured);
+        for (var j = 0; j < configuredKeys.length; j++) {
+          var key = configuredKeys[j];
+          if (!key) continue;
+          for (var c = 0; c < candidates.length; c++) {
+            if (('' + key).toLowerCase() === ('' + candidates[c]).toLowerCase()) {
+              return configured[key];
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    return (opts && opts.columnHitStyle) || (opts && opts.hitStyle) || null;
+  }
+
+  function resolveGlobalHitStyle(opts) {
+    return (opts && opts.globalHitStyle) || (opts && opts.hitStyle) || null;
+  }
+
+  function resolveColumnIndexForTextNode(node, api) {
+    if (!node) return null;
+
+    var current = node.parentNode;
+    var cell = null;
+
+    while (current) {
+      if (current.nodeType === 1 && current.getAttribute) {
+        var dataColumn = current.getAttribute('data-dt-column');
+        if (dataColumn !== null && dataColumn !== undefined && dataColumn !== '') {
+          var parsed = parseInt(dataColumn, 10);
+          if (!isNaN(parsed)) return parsed;
+        }
+
+        var tag = (current.nodeName || '').toLowerCase();
+        if (tag === 'td' || tag === 'th') {
+          cell = current;
+          break;
+        }
+      }
+      current = current.parentNode;
+    }
+
+    if (!cell || !api || !api.cell) return null;
+
+    try {
+      var index = api.cell(cell).index();
+      if (index && typeof index.column === 'number') return index.column;
+    } catch (_) {}
+
+    return null;
+  }
+
+  function buildHighlightRules(api, opts, columnIndex) {
+    var rules = [];
+    var seen = {};
+    var minLen = Number(opts.minLength || 0);
+    var caseSensitive = !!opts.caseSensitive;
+
+    function pushRule(term, source, priority, hitStyle, sourceColumnIndex) {
+      var raw = ('' + (term || '')).trim();
+      if (!raw) return;
+      if (minLen > 0 && raw.length < minLen) return;
+
+      var lookup = caseSensitive ? raw : raw.toLowerCase();
+      var key = source + '|' + (sourceColumnIndex == null ? '' : sourceColumnIndex) + '|' + lookup;
+      if (seen[key]) return;
+      seen[key] = true;
+
+      rules.push({
+        term: raw,
+        lookup: lookup,
+        source: source,
+        priority: priority,
+        hitStyle: hitStyle || null,
+        columnIndex: sourceColumnIndex,
+      });
+    }
+
+    try {
+      if (opts.includeGlobalSearch) {
+        var globalStyle = resolveGlobalHitStyle(opts);
+        parseSearchTerms(api.search()).forEach(function (term) {
+          pushRule(term, 'global', 1, globalStyle, null);
+        });
+      }
+    } catch (_) {}
+
+    try {
+      if (opts.includeColumnSearch && columnIndex !== undefined && columnIndex !== null) {
+        var columnStyle = resolveColumnHitStyle(api, opts, columnIndex);
+        parseSearchTerms(api.column(columnIndex).search()).forEach(function (term) {
+          pushRule(term, 'column', 2, columnStyle, columnIndex);
+        });
+      }
+    } catch (_) {}
+
+    return rules;
+  }
+
   function unwrapMarks(root, className) {
     if (!isValidElement(root)) return;
 
@@ -251,71 +392,91 @@
     return nodes;
   }
 
-  function highlightTextNode(node, regex, tagName, className, hitStyle) {
+  function buildHitClassName(baseClassName, rule) {
+    var classes = [baseClassName];
+    if (rule && rule.source === 'global') {
+      classes.push('hfx-dt-search-hit-global');
+    } else if (rule && rule.source === 'column') {
+      classes.push('hfx-dt-search-hit-column');
+      if (rule.columnIndex !== undefined && rule.columnIndex !== null && !isNaN(rule.columnIndex)) {
+        classes.push('hfx-dt-search-hit-column-' + rule.columnIndex);
+      }
+    }
+    return classes.join(' ');
+  }
+
+  function findNextRuleMatch(text, haystack, startAt, rules) {
+    var best = null;
+
+    for (var i = 0; i < rules.length; i++) {
+      var rule = rules[i];
+      if (!rule || !rule.lookup) continue;
+
+      var index = haystack.indexOf(rule.lookup, startAt);
+      if (index < 0) continue;
+
+      var candidate = {
+        index: index,
+        length: rule.term.length,
+        rule: rule,
+      };
+
+      if (!best || candidate.index < best.index) {
+        best = candidate;
+        continue;
+      }
+
+      if (candidate.index > best.index) continue;
+
+      if (candidate.rule.priority > best.rule.priority) {
+        best = candidate;
+        continue;
+      }
+
+      if (candidate.rule.priority === best.rule.priority && candidate.length > best.length) {
+        best = candidate;
+      }
+    }
+
+    return best;
+  }
+
+  function highlightTextNode(node, rules, tagName, className, caseSensitive) {
     var text = node.nodeValue;
     if (!text) return;
 
-    regex.lastIndex = 0;
-    var match = regex.exec(text);
+    var haystack = caseSensitive ? text : text.toLowerCase();
+    var match = findNextRuleMatch(text, haystack, 0, rules);
     if (!match) return;
 
     var doc = node.ownerDocument;
     var frag = doc.createDocumentFragment();
-    var last = 0;
+    var cursor = 0;
 
     do {
       var start = match.index;
-      var end = start + match[0].length;
-      if (start > last) frag.appendChild(doc.createTextNode(text.slice(last, start)));
+      var end = start + match.length;
+      if (start > cursor) frag.appendChild(doc.createTextNode(text.slice(cursor, start)));
       var mark = doc.createElement(tagName);
-      mark.className = className;
+      mark.className = buildHitClassName(className, match.rule);
       try {
         mark.setAttribute(HIT_ATTRIBUTE, '1');
       } catch (_) {}
-      applyHitStyle(mark, hitStyle);
-      mark.appendChild(doc.createTextNode(match[0]));
+      try {
+        if (match.rule && match.rule.source) mark.setAttribute('data-hfx-dt-search-source', match.rule.source);
+        if (match.rule && match.rule.columnIndex !== undefined && match.rule.columnIndex !== null && !isNaN(match.rule.columnIndex)) {
+          mark.setAttribute('data-hfx-dt-search-column', '' + match.rule.columnIndex);
+        }
+      } catch (_) {}
+      applyHitStyle(mark, match.rule ? match.rule.hitStyle : null);
+      mark.appendChild(doc.createTextNode(text.slice(start, end)));
       frag.appendChild(mark);
-      last = end;
-    } while ((match = regex.exec(text)));
+      cursor = end;
+      match = findNextRuleMatch(text, haystack, cursor, rules);
+    } while (match);
 
-    if (last < text.length) frag.appendChild(doc.createTextNode(text.slice(last)));
+    if (cursor < text.length) frag.appendChild(doc.createTextNode(text.slice(cursor)));
     node.parentNode.replaceChild(frag, node);
-  }
-
-  function buildRegex(terms, caseSensitive) {
-    var list = (terms || []).slice().filter(Boolean);
-    if (list.length === 0) return null;
-    list.sort(function (a, b) {
-      return ('' + b).length - ('' + a).length;
-    });
-    var flags = 'g' + (caseSensitive ? '' : 'i');
-    return new RegExp('(' + list.map(escapeRegex).join('|') + ')', flags);
-  }
-
-  function getSearchTerms(api, opts) {
-    var terms = [];
-    try {
-      if (opts.includeGlobalSearch) {
-        parseSearchTerms(api.search()).forEach(function (t) {
-          uniqPush(terms, t);
-        });
-      }
-      if (opts.includeColumnSearch) {
-        api.columns().every(function () {
-          parseSearchTerms(this.search()).forEach(function (t) {
-            uniqPush(terms, t);
-          });
-        });
-      }
-    } catch (_) {}
-
-    var minLen = Number(opts.minLength || 0);
-    if (minLen > 0) {
-      terms = terms.filter(function (t) {
-        return ('' + t).length >= minLen;
-      });
-    }
-    return terms;
   }
 
   function applyHighlighting(tableId) {
@@ -338,15 +499,18 @@
       // Always clear previous marks first so we don't nest/duplicate.
       unwrapMarks(tbody, className);
 
-      var terms = getSearchTerms(api, opts);
-      if (!terms || terms.length === 0) return;
-
-      var regex = buildRegex(terms, !!opts.caseSensitive);
-      if (!regex) return;
-
       var nodes = collectTextNodes(tbody);
       for (var i = 0; i < nodes.length; i++) {
-        highlightTextNode(nodes[i], regex, tagName, className, opts.hitStyle);
+        var columnIndex = resolveColumnIndexForTextNode(nodes[i], api);
+        var rules = buildHighlightRules(api, opts, columnIndex);
+        if (!rules || rules.length === 0) continue;
+
+        rules.sort(function (a, b) {
+          if (b.priority !== a.priority) return b.priority - a.priority;
+          return ('' + b.term).length - ('' + a.term).length;
+        });
+
+        highlightTextNode(nodes[i], rules, tagName, className, !!opts.caseSensitive);
       }
     } catch (_) {}
   }

@@ -7,8 +7,8 @@ Highlights the active DataTables search terms directly inside cell text (like br
 Include the bundle:
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.10/dist/datatables.searchHighlighter.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.10/dist/datatables.searchHighlighter.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.16/dist/datatables.searchHighlighter.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@evotecit/htmlextensions@0.1.16/dist/datatables.searchHighlighter.min.js"></script>
 ```
 
 Enable via DataTables options:
@@ -39,11 +39,35 @@ $('#table').DataTable({
         'padding': '0 2px'
       }
     },
+    // Optional: style global search hits differently from column-filter hits
+    globalHitStyle: {
+      backgroundColor: '#dbeafe',
+      textColor: '#1e3a8a'
+    },
+    columnHitStyle: {
+      backgroundColor: '#fef3c7',
+      textColor: '#92400e'
+    },
+    // Optional: per-column override map for filter hits
+    columnHitStyles: {
+      Status: {
+        backgroundColor: '#dcfce7',
+        textColor: '#166534'
+      },
+      0: {
+        backgroundColor: '#fee2e2',
+        textColor: '#b91c1c'
+      }
+    },
     // Optional: set CSS variables on the table element (consumed by the default CSS)
     cssVars: {
       '--hfx-dt-search-hit-bg': 'rgba(180, 215, 255, 0.85)',
       '--hfx-dt-search-hit-color': '#000',
-      '--hfx-dt-search-hit-radius': '2px'
+      '--hfx-dt-search-hit-radius': '2px',
+      '--hfx-dt-search-hit-global-bg': '#dbeafe',
+      '--hfx-dt-search-hit-global-color': '#1e3a8a',
+      '--hfx-dt-search-hit-column-bg': '#fef3c7',
+      '--hfx-dt-search-hit-column-color': '#92400e'
     }
   }
 });
@@ -62,6 +86,9 @@ $('#table').DataTable({
   - `backgroundColor` (string)
   - `textColor` (string) (alias: `color`)
   - `css` (object) arbitrary CSS properties via `style.setProperty(...)` (supports kebab-case and CSS vars)
+- `globalHitStyle` (object, optional) — inline styles for hits produced by the global search box
+- `columnHitStyle` (object, optional) — inline styles for hits produced by per-column filters
+- `columnHitStyles` (object, optional) — per-column override map for filter hits; keys can be header text (`"Status"`) or zero-based column indexes (`"0"`)
 - `cssVars` (object, optional) — applied on the table element (keys must start with `--`)
 
 ## Styling
@@ -71,5 +98,9 @@ The default CSS uses:
 - `--hfx-dt-search-hit-bg`
 - `--hfx-dt-search-hit-color`
 - `--hfx-dt-search-hit-radius`
+- `--hfx-dt-search-hit-global-bg`
+- `--hfx-dt-search-hit-global-color`
+- `--hfx-dt-search-hit-column-bg`
+- `--hfx-dt-search-hit-column-color`
 
 Override them in your page/theme to match Tabler/Bootstrap/etc.

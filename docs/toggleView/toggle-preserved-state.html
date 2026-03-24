@@ -361,10 +361,27 @@
             searchHighlighter: {
               includeColumnSearch: true,
               minLength: 2,
-              hitStyle: {
-                backgroundColor: '#dbeafe',
-                textColor: '#1e3a8a',
+              cssVars: {
+                '--hfx-dt-search-hit-global-bg': '#dbeafe',
+                '--hfx-dt-search-hit-global-color': '#1e3a8a',
+                '--hfx-dt-search-hit-column-bg': '#fef3c7',
+                '--hfx-dt-search-hit-column-color': '#92400e'
+              },
+              globalHitStyle: {
                 css: { 'border-radius': '3px', 'padding': '0 2px' }
+              },
+              columnHitStyle: {
+                css: { 'border-radius': '3px', 'padding': '0 2px', 'font-weight': '600' }
+              },
+              columnHitStyles: {
+                Server: {
+                  backgroundColor: '#dcfce7',
+                  textColor: '#166534'
+                },
+                Status: {
+                  backgroundColor: '#fee2e2',
+                  textColor: '#b91c1c'
+                }
               }
             }
           });
@@ -460,7 +477,13 @@
   columnHighlighter: { rules: [/* status coloring */] },
   searchHighlighter: {
     includeColumnSearch: true,
-    minLength: 2
+    minLength: 2,
+    globalHitStyle: { /* search box style */ },
+    columnHitStyle: { /* shared column-filter style */ },
+    columnHitStyles: {
+      Server: { /* column-specific filter style */ },
+      Status: { /* another column-specific filter style */ }
+    }
   }
 });</code></pre>
 

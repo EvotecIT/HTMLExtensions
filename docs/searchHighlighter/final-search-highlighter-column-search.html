@@ -37,10 +37,27 @@
                     searchHighlighter: {
                         includeColumnSearch: true,
                         minLength: 2,
-                        hitStyle: {
-                            backgroundColor: '#f3d9fa',
-                            textColor: '#2b0a3d',
+                        cssVars: {
+                            '--hfx-dt-search-hit-global-bg': '#dbeafe',
+                            '--hfx-dt-search-hit-global-color': '#1e3a8a',
+                            '--hfx-dt-search-hit-column-bg': '#fef3c7',
+                            '--hfx-dt-search-hit-column-color': '#92400e'
+                        },
+                        globalHitStyle: {
                             css: { 'border-radius': '3px', 'padding': '0 2px' }
+                        },
+                        columnHitStyle: {
+                            css: { 'border-radius': '3px', 'padding': '0 2px', 'font-weight': '600' }
+                        },
+                        columnHitStyles: {
+                            Name: {
+                                backgroundColor: '#dcfce7',
+                                textColor: '#166534'
+                            },
+                            Department: {
+                                backgroundColor: '#fce7f3',
+                                textColor: '#9d174d'
+                            }
                         }
                     }
                 });
@@ -61,8 +78,8 @@
 
     <body>
         <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/sources/datatables/searchHighlighter/README.md"></script>
-        <h2>Search Highlighter — Column Search</h2>
-        <p class="note">Use the per-column filters and the global search box. Hits from both are highlighted (default behavior).</p>
+        <h2>Search Highlighter — Global Search vs Column Filters</h2>
+        <p class="note">Use the per-column filters and the global search box. Global search hits use one style, column-filter hits use another, and specific columns can override filter colors.</p>
 
         <table id="demoSearchHighlighterColumns" class="display compact" style="width:100%">
             <thead>
@@ -91,7 +108,7 @@
 
         <section class="example-notes">
             <h3>About this example</h3>
-            <p>Highlights terms from both the global search box and per-column filters (<code>includeColumnSearch: true</code>).</p>
+            <p>Highlights terms from both the global search box and per-column filters (<code>includeColumnSearch: true</code>) with distinct source-aware styling.</p>
 
             <h3>Configuration</h3>
 <pre><code class="language-js">var table = $('#demoSearchHighlighterColumns').DataTable({
@@ -100,10 +117,21 @@
   searchHighlighter: {
     includeColumnSearch: true,
     minLength: 2,
-    hitStyle: {
-      backgroundColor: '#f3d9fa',
-      textColor: '#2b0a3d',
+    cssVars: {
+      '--hfx-dt-search-hit-global-bg': '#dbeafe',
+      '--hfx-dt-search-hit-global-color': '#1e3a8a',
+      '--hfx-dt-search-hit-column-bg': '#fef3c7',
+      '--hfx-dt-search-hit-column-color': '#92400e'
+    },
+    globalHitStyle: {
       css: { 'border-radius': '3px', 'padding': '0 2px' }
+    },
+    columnHitStyle: {
+      css: { 'border-radius': '3px', 'padding': '0 2px', 'font-weight': '600' }
+    },
+    columnHitStyles: {
+      Name: { backgroundColor: '#dcfce7', textColor: '#166534' },
+      Department: { backgroundColor: '#fce7f3', textColor: '#9d174d' }
     }
   }
 });
