@@ -1,7 +1,7 @@
 /*!
- HTMLExtensions v0.1.14 — DataTables ColumnHighlighter & ToggleView
+ HTMLExtensions v0.1.15 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-11T10:41:54.228Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-24T10:26:15.586Z
 */
 
 (function (global) {
@@ -21,16 +21,171 @@
     return mode === 'ScrollX' ? 'Switch to Responsive' : 'Switch to ScrollX';
   }
 
+  function isScrollXEnabled(value) {
+    return !(value === false || value == null || value === '' || value === 0 || value === '0');
+  }
+
+  function isScrollYEnabled(value) {
+    return !(value === false || value == null || value === '' || value === 0 || value === '0');
+  }
+
+  function readScrollXConfig(init, settings) {
+    try {
+      var candidates = [
+        init && init.scrollX,
+        init && init.sScrollX,
+        settings && settings.oInit && settings.oInit.scrollX,
+        settings && settings.oInit && settings.oInit.sScrollX,
+      ];
+      for (var i = 0; i < candidates.length; i++) {
+        if (isScrollXEnabled(candidates[i])) return candidates[i] === true ? '100%' : candidates[i];
+      }
+    } catch (_) {}
+    return '100%';
+  }
+
+  function readScrollCollapseConfig(init, settings) {
+    try {
+      var candidates = [
+        init && init.scrollCollapse,
+        init && init.bScrollCollapse,
+        settings && settings.oInit && settings.oInit.scrollCollapse,
+        settings && settings.oInit && settings.oInit.bScrollCollapse,
+      ];
+      for (var i = 0; i < candidates.length; i++) {
+        if (typeof candidates[i] === 'boolean') return candidates[i];
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  function readScrollYConfig(init, settings) {
+    try {
+      var candidates = [
+        init && init.scrollY,
+        init && init.sScrollY,
+        settings && settings.oInit && settings.oInit.scrollY,
+        settings && settings.oInit && settings.oInit.sScrollY,
+      ];
+      for (var i = 0; i < candidates.length; i++) {
+        if (isScrollYEnabled(candidates[i])) return candidates[i];
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  function resolveToggleViewConfig(init, settings) {
+    init = init || {};
+    if (!init.hfxToggleViewConfig || typeof init.hfxToggleViewConfig !== 'object') {
+      init.hfxToggleViewConfig = {};
+    }
+    if (!isScrollXEnabled(init.hfxToggleViewConfig.scrollX)) {
+      init.hfxToggleViewConfig.scrollX = readScrollXConfig(init, settings);
+    }
+    if (typeof init.hfxToggleViewConfig.scrollCollapse !== 'boolean') {
+      init.hfxToggleViewConfig.scrollCollapse = readScrollCollapseConfig(init, settings);
+    }
+    if (!('scrollY' in init.hfxToggleViewConfig)) {
+      init.hfxToggleViewConfig.scrollY = readScrollYConfig(init, settings);
+    }
+    return init.hfxToggleViewConfig;
+  }
+
+  function clearHorizontalScrollOptions(init) {
+    if (!init || typeof init !== 'object') return;
+    delete init.scrollX;
+    delete init.sScrollX;
+    delete init.scrollXInner;
+    delete init.sScrollXInner;
+  }
+
+  function clearScrollCollapseOptions(init) {
+    if (!init || typeof init !== 'object') return;
+    delete init.scrollCollapse;
+    delete init.bScrollCollapse;
+  }
+
+  function resolveCanonicalTableNode(api) {
+    try {
+      var $ = global.jQuery || global.$;
+      if (!$ || !api || !api.table) return null;
+
+      var table = api.table().node();
+      if (!table) return null;
+
+      var $table = $(table);
+      var inCloneSection = $table.closest(
+        'div.dt-scroll-head,div.dataTables_scrollHead,div.dt-scroll-foot,div.dataTables_scrollFoot'
+      ).length > 0;
+
+      if (inCloneSection || !table.id || /^DataTables_Table_/i.test(table.id)) {
+        var $scroll = $table.closest('div.dt-scroll,div.dataTables_scroll');
+        if ($scroll.length) {
+          var $bodyTable = $scroll.find('div.dt-scroll-body table,div.dataTables_scrollBody table').first();
+          if ($bodyTable.length) return $bodyTable.get(0);
+        }
+      }
+
+      return table;
+    } catch (_) {
+      try {
+        return api && api.table ? api.table().node() : null;
+      } catch (_2) {
+        return null;
+      }
+    }
+  }
+
+  function resolveCanonicalApi(api) {
+    try {
+      var $ = global.jQuery || global.$;
+      if (!$ || !api) return api;
+      var table = resolveCanonicalTableNode(api);
+      if (!table) return api;
+      return $(table).DataTable();
+    } catch (_) {
+      return api;
+    }
+  }
+
   function hasScrollWrapper(api) {
     try {
       var $ = global.jQuery || global.$;
       if (!$ || !api || !api.table) return false;
-      var table = api.table().node();
+      var table = resolveCanonicalTableNode(api);
       if (!table) return false;
       return $(table).closest('div.dt-scroll-body,div.dataTables_scrollBody').length > 0;
     } catch (_) {
       return false;
     }
+  }
+
+  function cleanupScrollArtifacts(table) {
+    try {
+      var $ = global.jQuery || global.$;
+      if (!$ || !table) return;
+
+      var $table = $(table);
+      var $scroll = $table.closest('div.dt-scroll,div.dataTables_scroll');
+      if (!$scroll.length) {
+        var $section = $table.closest(
+          'div.dt-scroll-head,div.dataTables_scrollHead,div.dt-scroll-body,div.dataTables_scrollBody,div.dt-scroll-foot,div.dataTables_scrollFoot'
+        );
+        if ($section.length) $scroll = $section.closest('div.dt-scroll,div.dataTables_scroll');
+      }
+      if ($scroll.length) {
+        $scroll.before($table);
+        $scroll.remove();
+      }
+
+      $table.css({
+        width: '',
+        maxWidth: '',
+        marginLeft: '',
+        marginRight: '',
+        tableLayout: '',
+      });
+    } catch (_) {}
   }
 
   function resolveResponsiveConfig(init, settings) {
@@ -48,15 +203,27 @@
   function detectMode(api, initFallback) {
     try {
       var st = api.settings ? api.settings()[0] : null;
-      var scrollInit = !!(st && st.oInit && st.oInit.scrollX === true);
+      var scrollInit =
+        isScrollXEnabled(st && st.oInit && st.oInit.scrollX) ||
+        isScrollXEnabled(st && st.oInit && st.oInit.sScrollX) ||
+        isScrollXEnabled(initFallback && initFallback.scrollX) ||
+        isScrollXEnabled(initFallback && initFallback.sScrollX);
+      var scrollActive =
+        isScrollXEnabled(st && st.oScroll && st.oScroll.sX) ||
+        isScrollXEnabled(st && st.oScroll && st.oScroll.sXInner) ||
+        scrollInit;
       var responsiveConfigured = !!(st && st.oInit && st.oInit.responsive && st.oInit.responsive !== false);
-      if (hasScrollWrapper(api)) return 'ScrollX';
-      if (scrollInit && !responsiveConfigured) return 'ScrollX';
+      if (responsiveConfigured && !scrollActive) return 'Responsive';
+      if (scrollActive && !responsiveConfigured) return 'ScrollX';
+      if (scrollActive) return 'ScrollX';
       if (responsiveConfigured) return 'Responsive';
-      if (initFallback && initFallback.scrollX === true) return 'ScrollX';
+      if (hasScrollWrapper(api)) return 'ScrollX';
       return 'Responsive';
     } catch (_) {
-      return initFallback && initFallback.scrollX === true ? 'ScrollX' : 'Responsive';
+      return isScrollXEnabled(initFallback && initFallback.scrollX) ||
+        isScrollXEnabled(initFallback && initFallback.sScrollX)
+        ? 'ScrollX'
+        : 'Responsive';
     }
   }
 
@@ -176,7 +343,11 @@
   function restoreExtensionState(api, state) {
     try {
       if (!state) return;
-      if (Array.isArray(state.colReorder) && api.colReorder && typeof api.colReorder.order === 'function') {
+      if (
+        Array.isArray(state.colReorder) &&
+        api.colReorder &&
+        typeof api.colReorder.order === 'function'
+      ) {
         api.colReorder.order(state.colReorder, true);
       }
     } catch (_) {}
@@ -294,6 +465,49 @@
     } catch (_) {}
   }
 
+  function rebindColumnFilters(tableId, includeHeader, includeFooter, attempt) {
+    try {
+      var $ = global.jQuery || global.$;
+      if (!$ || !global.hfxDt || !tableId) return;
+
+      var selector = '#' + tableId;
+      var $table = $(selector);
+      if (!$table.length) {
+        if ((attempt || 0) < 6) {
+          setTimeout(function () {
+            rebindColumnFilters(tableId, includeHeader, includeFooter, (attempt || 0) + 1);
+          }, 100);
+        }
+        return;
+      }
+
+      if (includeHeader && typeof global.hfxDt.headerFilters === 'function') {
+        global.hfxDt.headerFilters(selector);
+      }
+      if (includeFooter && typeof global.hfxDt.footerFilters === 'function') {
+        global.hfxDt.footerFilters(selector);
+      }
+
+      var api = null;
+      try {
+        api = $table.DataTable();
+      } catch (_) {}
+      var container = api && api.table ? $(api.table().container()) : $table.closest('.dt-container, .dataTables_wrapper');
+      var headerReady =
+        !includeHeader ||
+        container.find('div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input,thead tr.hfx-header-filter input.hfx-dt-column-filter-input').length > 0;
+      var footerReady =
+        !includeFooter ||
+        container.find('div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input,tfoot tr.hfx-footer-filter input.hfx-dt-column-filter-input').length > 0;
+
+      if ((!headerReady || !footerReady) && (attempt || 0) < 6) {
+        setTimeout(function () {
+          rebindColumnFilters(tableId, includeHeader, includeFooter, (attempt || 0) + 1);
+        }, 100);
+      }
+    } catch (_) {}
+  }
+
   function updateToggleButtonLabel(api) {
     try {
       var mode = detectMode(api, api && api.init ? api.init() : null);
@@ -305,23 +519,44 @@
     var $ = global.jQuery || global.$;
     if (!$) return;
 
-    var table = api.table().node();
+    api = resolveCanonicalApi(api);
+    var table = resolveCanonicalTableNode(api);
     var id = table && table.id ? table.id : null;
     var init = deepClone(api.init ? api.init() : {});
     var st = api.settings ? api.settings()[0] : null;
     var modeBefore = detectMode(api, init);
+    var hadScrollWrapper = hasScrollWrapper(api);
+    var hadHeaderFilters = false;
+    var hadFooterFilters = false;
+    try {
+      var $container = $(api.table().container());
+      hadHeaderFilters =
+        $container.find('tr.hfx-header-filter').length > 0 ||
+        $container.find('div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input').length > 0;
+      hadFooterFilters =
+        $container.find('tr.hfx-footer-filter').length > 0 ||
+        $container.find('div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input').length > 0;
+    } catch (_) {}
     var state = preserveState(api);
     var responsiveCfg = resolveResponsiveConfig(init, st);
+    var toggleCfg = resolveToggleViewConfig(init, st);
 
     api.destroy();
+    if (modeBefore === 'ScrollX' || hadScrollWrapper) {
+      cleanupScrollArtifacts(table);
+    }
 
     if (modeBefore === 'Responsive') {
       init.responsiveConfig = responsiveCfg;
       init.responsive = false;
-      init.scrollX = true;
+      clearHorizontalScrollOptions(init);
+      init.scrollX = toggleCfg.scrollX;
+      init.scrollCollapse = !!toggleCfg.scrollCollapse;
+      init.bScrollCollapse = !!toggleCfg.scrollCollapse;
       init.autoWidth = true;
     } else {
-      init.scrollX = false;
+      clearHorizontalScrollOptions(init);
+      if (!isScrollYEnabled(toggleCfg.scrollY)) clearScrollCollapseOptions(init);
       init.autoWidth = false;
       init.responsive = responsiveCfg || { details: { type: 'inline' } };
     }
@@ -337,13 +572,19 @@
     restoreState(newApi, state);
 
     try {
-      if (global.hfxDt) global.hfxDt.applyViewportAndToolbar(newApi);
+      if (global.hfxDt) {
+        global.hfxDt.applyViewportAndToolbar(newApi);
+      }
     } catch (_) {}
+    if (table && table.id && (hadHeaderFilters || hadFooterFilters)) {
+      rebindColumnFilters(table.id, hadHeaderFilters, hadFooterFilters, 0);
+    }
     updateToggleButtonLabel(newApi);
 
     return newApi;
   }
 
+  global.hfxToggleViewCanonicalApi = resolveCanonicalApi;
   global.hfxToggleViewMode = detectMode;
   global.hfxToggleViewLabel = labelForMode;
   global.hfxToggleView = toggle;
@@ -396,9 +637,10 @@
   if (!DataTable || !DataTable.ext || !DataTable.ext.buttons) return;
 
   var def = {
-    className: 'buttons-toggle-view',
+    className: 'buttons-toggle-view btn-sm',
     text: function (dt) {
       try {
+        dt = window.hfxToggleViewCanonicalApi ? window.hfxToggleViewCanonicalApi(dt) : dt;
         var mode = window.hfxToggleViewMode
           ? window.hfxToggleViewMode(dt, dt.init ? dt.init() : null)
           : 'Responsive';
@@ -408,6 +650,7 @@
       }
     },
     action: function (e, dt) {
+      dt = window.hfxToggleViewCanonicalApi ? window.hfxToggleViewCanonicalApi(dt) : dt;
       var api = (window.hfxToggleView ? window.hfxToggleView(dt) : dt) || dt;
       try {
         var mode = window.hfxToggleViewMode

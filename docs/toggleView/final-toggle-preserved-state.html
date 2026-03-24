@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Toggle View — Preserved State Demo</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
+    <link rel="stylesheet" href="../../dist/datatables.searchHighlighter.css" />
+    <link data-prism-theme="light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" />
+    <link data-prism-theme="dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" disabled />
+    <link rel="stylesheet" href="../assets/site.css" />
+    <script data-cfasync="false" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script data-cfasync="false" src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+    <script data-cfasync="false" src="../../dist/datatables.toggleView.js"></script>
+    <script data-cfasync="false" src="../../dist/datatables.columnHighlighter.js"></script>
+    <script data-cfasync="false" src="../../dist/datatables.searchHighlighter.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" />
+    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script data-cfasync="false" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 12px; }
+      .narrow { max-width: 1180px; margin: 0 auto; }
+      .lead { margin-bottom: 18px; color: #4b5563; }
+      .status-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        margin: 12px 0 16px;
+      }
+      .status-card {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 12px 14px;
+      }
+      .status-card .label {
+        display: block;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        margin-bottom: 4px;
+      }
+      .status-card .value {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      .toolbar-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 0 14px;
+      }
+      .toolbar-row p {
+        margin: 0;
+        color: #4b5563;
+      }
+      .demo-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .demo-actions button {
+        appearance: none;
+        border: 1px solid rgba(0, 0, 0, 0.14);
+        border-radius: 8px;
+        background: #fff;
+        color: #111827;
+        cursor: pointer;
+        font-size: 0.92rem;
+        padding: 8px 12px;
+      }
+      .demo-actions button:hover { background: #f8fafc; }
+      .demo-filter-panel {
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 12px;
+        background: rgba(248, 250, 252, 0.88);
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+      .demo-filter-panel h3 {
+        margin: 0 0 10px;
+        font-size: 1rem;
+      }
+      .filter-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+      .filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .filter-field label {
+        font-size: 0.82rem;
+        color: #6b7280;
+        font-weight: 600;
+      }
+      .filter-field input {
+        border: 1px solid rgba(0, 0, 0, 0.14);
+        border-radius: 8px;
+        padding: 8px 10px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .table-wrap { overflow-x: auto; }
+      tfoot input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border: 1px solid rgba(0, 0, 0, 0.14);
+        border-radius: 8px;
+      }
+      .example-notes { margin-top: 18px; }
+      .example-notes h3 { margin: 14px 0 8px; font-size: 1.05rem; }
+      pre[class*="language-"] { margin: 10px 0; border-radius: 6px; }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 0.78rem;
+        font-weight: 600;
+      }
+      .chip.ok { background: #e8f7eb; color: #1f7a35; }
+      .chip.warn { background: #fff4d6; color: #9a6700; }
+      html.theme-dark .status-card,
+      html.theme-dark .demo-filter-panel,
+      html.theme-dark .demo-actions button {
+        background: rgba(22, 26, 35, 0.9);
+        border-color: rgba(255, 255, 255, 0.12);
+        color: var(--text);
+      }
+      html.theme-dark .lead,
+      html.theme-dark .toolbar-row p,
+      html.theme-dark .status-card .label,
+      html.theme-dark .filter-field label {
+        color: var(--muted-text);
+      }
+      html.theme-dark .filter-field input,
+      html.theme-dark tfoot input {
+        background: rgba(15, 17, 22, 0.92);
+        color: var(--text);
+        border-color: rgba(255, 255, 255, 0.14);
+      }
+    </style>
+    <script>
+      $(function () {
+        var tableSelector = '#tblTogglePreservedState';
+        var tableId = 'tblTogglePreservedState';
+        var demoEventNs = '.togglePreservedStateDemo';
+        var topFilterIndexes = [0, 1, 2, 7];
+        var demoApi = null;
+
+        var sampleRows = [
+          { Server: 'AD0.ad.evotec.xyz', Domain: 'ad.evotec.xyz', Site: 'KATOWICE-2', IsGC: 'True', IsRO: 'False', IPv4: '192.168.241.4', LargestDelta: '5m', Uptime: '5d 23h', Status: 'Degraded' },
+          { Server: 'AD1.ad.evotec.xyz', Domain: 'ad.evotec.xyz', Site: 'KATOWICE-2', IsGC: 'True', IsRO: 'False', IPv4: '192.168.241.5', LargestDelta: '8m', Uptime: '5d 23h', Status: 'Degraded' },
+          { Server: 'AD2.ad.evotec.xyz', Domain: 'ad.evotec.xyz', Site: 'KATOWICE-2', IsGC: 'True', IsRO: 'False', IPv4: '192.168.241.6', LargestDelta: '13m', Uptime: '5d 23h', Status: 'Degraded' },
+          { Server: 'ADRODC.ad.evotec.pl', Domain: 'ad.evotec.pl', Site: 'KATOWICE-2', IsGC: 'True', IsRO: 'True', IPv4: '192.168.241.17', LargestDelta: '9m', Uptime: 'n/a', Status: 'Healthy' },
+          { Server: 'DC1.ad.evotec.pl', Domain: 'ad.evotec.pl', Site: 'KATOWICE-2', IsGC: 'True', IsRO: 'False', IPv4: '192.168.241.16', LargestDelta: '4m', Uptime: 'n/a', Status: 'Healthy' },
+          { Server: 'dc01.example.local', Domain: 'example.local', Site: 'BERLIN-1', IsGC: 'False', IsRO: 'False', IPv4: '10.20.0.5', LargestDelta: '18m', Uptime: '18h', Status: 'Unknown' },
+          { Server: 'example.com', Domain: 'example.com', Site: 'MADRID-3', IsGC: 'False', IsRO: 'False', IPv4: '172.20.10.50', LargestDelta: '2m', Uptime: '11d 9h', Status: 'Healthy' },
+          { Server: 'example.eu', Domain: 'example.eu', Site: 'WARSAW-5', IsGC: 'False', IsRO: 'True', IPv4: '172.20.10.60', LargestDelta: '22m', Uptime: '2d 2h', Status: 'Degraded' }
+        ];
+
+        function currentApi() {
+          try {
+            return $(tableSelector).DataTable();
+          } catch (_) {
+            return demoApi;
+          }
+        }
+
+        function modeLabel(api) {
+          return window.hfxToggleViewMode ? window.hfxToggleViewMode(api, api && api.init ? api.init() : null) : 'Unknown';
+        }
+
+        function renderTopFilters(api) {
+          var columns = api.settings()[0].aoColumns;
+          var html = '';
+          topFilterIndexes.forEach(function (index) {
+            var title = columns[index].sTitle;
+            html += '<div class="filter-field">';
+            html += '<label for="top-filter-' + index + '">' + title + '</label>';
+            html += '<input id="top-filter-' + index + '" class="demo-top-filter" data-column-index="' + index + '" type="text" placeholder="Filter ' + title + '" />';
+            html += '</div>';
+          });
+          $('#top-filters').html(html);
+          syncFilterInputs(api);
+        }
+
+        function renderFooterFilters(api) {
+          api.columns().every(function (index) {
+            var footer = $(this.footer());
+            if (!footer.length) return;
+            var title = $(api.column(index).header()).text().trim();
+            if (!footer.find('input.demo-footer-filter').length) {
+              footer.html('<input class="demo-footer-filter" data-column-index="' + index + '" type="text" placeholder="' + title + '" />');
+            }
+          });
+          syncFilterInputs(api);
+        }
+
+        function syncFilterInputs(api) {
+          api.columns().every(function (index) {
+            var value = this.search() || '';
+            $('.demo-top-filter[data-column-index="' + index + '"], .demo-footer-filter[data-column-index="' + index + '"]').val(value);
+          });
+        }
+
+        function visibleColumnCount(api) {
+          var count = 0;
+          api.columns().every(function () {
+            if (this.visible()) count += 1;
+          });
+          return count;
+        }
+
+        function activeFilters(api) {
+          var count = 0;
+          api.columns().every(function () {
+            if ((this.search() || '').trim()) count += 1;
+          });
+          return count;
+        }
+
+        function updateSummary(api) {
+          var info = api.page.info();
+          var order = api.order();
+          var orderedColumn = order.length ? $(api.column(order[0][0]).header()).text().trim() : 'None';
+          var orderedDir = order.length ? order[0][1].toUpperCase() : 'NA';
+          var globalSearch = api.search() || 'None';
+
+          $('#summary-mode').text(modeLabel(api));
+          $('#summary-rows').text(info.recordsDisplay + ' / ' + info.recordsTotal);
+          $('#summary-filters').text(activeFilters(api));
+          $('#summary-columns').text(visibleColumnCount(api) + ' visible');
+          $('#summary-order').text(orderedColumn + ' ' + orderedDir);
+          $('#summary-search').text(globalSearch);
+        }
+
+        function bindFilterEvents() {
+          $(document).off('input' + demoEventNs + ' change' + demoEventNs, '.demo-top-filter, .demo-footer-filter');
+          $(document).on('input' + demoEventNs + ' change' + demoEventNs, '.demo-top-filter, .demo-footer-filter', function () {
+            var api = currentApi();
+            if (!api) return;
+            var columnIndex = parseInt($(this).attr('data-column-index'), 10);
+            var value = $(this).val();
+            if (api.column(columnIndex).search() !== value) {
+              api.column(columnIndex).search(value).draw();
+            }
+            $('.demo-top-filter[data-column-index="' + columnIndex + '"], .demo-footer-filter[data-column-index="' + columnIndex + '"]').not(this).val(value);
+          });
+        }
+
+        function bindDemoButtons() {
+          $(document).off('click' + demoEventNs, '#reset-demo-state');
+          $(document).on('click' + demoEventNs, '#reset-demo-state', function () {
+            var api = currentApi();
+            if (!api) return;
+            var state = api.state && typeof api.state.clear === 'function' ? api.state.clear() : null;
+            if (state === null) {
+              try {
+                localStorage.removeItem('DataTables_' + tableId + '_' + window.location.pathname);
+              } catch (_) {}
+            }
+            api.search('');
+            api.columns().search('');
+            api.order([[6, 'desc']]);
+            api.columns().visible(true, false);
+            api.draw(false);
+            syncFilterInputs(api);
+            updateSummary(api);
+          });
+
+          $(document).off('click' + demoEventNs, '#apply-demo-state');
+          $(document).on('click' + demoEventNs, '#apply-demo-state', function () {
+            var api = currentApi();
+            if (!api) return;
+            api.search('evotec');
+            api.column(0).search('AD');
+            api.column(7).search('Degraded');
+            api.order([[6, 'desc']]);
+            api.column(5).visible(false, false);
+            api.draw(false);
+            syncFilterInputs(api);
+            updateSummary(api);
+          });
+
+          $(document).off('click' + demoEventNs, tableSelector + '_wrapper .buttons-toggle-view');
+          $(document).on('click' + demoEventNs, tableSelector + '_wrapper .buttons-toggle-view', function () {
+            setTimeout(function () {
+              var api = currentApi();
+              if (!api) return;
+              renderTopFilters(api);
+              renderFooterFilters(api);
+              bindTableEvents(api);
+              updateSummary(api);
+            }, 0);
+          });
+        }
+
+        function bindTableEvents(api) {
+          $(tableSelector).off(demoEventNs);
+          $(tableSelector).on('draw.dt' + demoEventNs + ' search.dt' + demoEventNs + ' order.dt' + demoEventNs + ' column-visibility.dt' + demoEventNs + ' responsive-display.dt' + demoEventNs, function () {
+            var current = currentApi();
+            if (!current) return;
+            syncFilterInputs(current);
+            updateSummary(current);
+          });
+        }
+
+        function initDemoTable() {
+          if ($.fn.dataTable.isDataTable(tableSelector)) {
+            $(tableSelector).DataTable().destroy();
+          }
+
+          demoApi = $(tableSelector).DataTable({
+            dom: 'Bfrtip',
+            stateSave: true,
+            autoWidth: true,
+            responsive: false,
+            scrollX: '100%',
+            pageLength: 5,
+            order: [[6, 'desc']],
+            buttons: ['copyHtml5', 'csvHtml5', 'excelHtml5', 'colvis', 'toggleView'],
+            data: sampleRows,
+            columns: [
+              { data: 'Server', title: 'Server' },
+              { data: 'Domain', title: 'Domain' },
+              { data: 'Site', title: 'Site' },
+              { data: 'IsGC', title: 'Is GC' },
+              { data: 'IsRO', title: 'Is RO' },
+              { data: 'IPv4', title: 'IPv4' },
+              { data: 'LargestDelta', title: 'Largest Delta' },
+              { data: 'Status', title: 'Status' },
+              { data: 'Uptime', title: 'Uptime' }
+            ],
+            columnHighlighter: {
+              rules: [
+                { conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Status', operator: 'eq', type: 'string', value: 'Degraded' }] }], targets: [{ column: 'Status', backgroundColor: '#fff4d6', textColor: '#9a6700' }] },
+                { conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Status', operator: 'eq', type: 'string', value: 'Healthy' }] }], targets: [{ column: 'Status', backgroundColor: '#e8f7eb', textColor: '#1f7a35' }] },
+                { conditionsContainer: [{ logic: 'AND', conditions: [{ columnName: 'Status', operator: 'eq', type: 'string', value: 'Unknown' }] }], targets: [{ column: 'Status', backgroundColor: '#e5eefc', textColor: '#1d4ed8' }] }
+              ]
+            },
+            searchHighlighter: {
+              includeColumnSearch: true,
+              minLength: 2,
+              hitStyle: {
+                backgroundColor: '#dbeafe',
+                textColor: '#1e3a8a',
+                css: { 'border-radius': '3px', 'padding': '0 2px' }
+              }
+            }
+          });
+
+          renderTopFilters(demoApi);
+          renderFooterFilters(demoApi);
+          bindFilterEvents();
+          bindDemoButtons();
+          bindTableEvents(demoApi);
+          updateSummary(demoApi);
+        }
+
+        initDemoTable();
+      });
+    </script>
+  </head>
+
+  <body>
+    <script defer src="../assets/site.js" data-docs-root="../" data-readme="https://github.com/EvotecIT/HTMLExtensions/blob/master/README.MD"></script>
+    <div class="narrow">
+      <h2>Toggle View — Preserved State Demo</h2>
+      <p class="lead">A full interactive example for switching between <span class="chip warn">ScrollX</span> and Responsive mode while keeping column filters, footer filters, global search, ordering, column visibility, and highlighting intact.</p>
+
+      <div class="toolbar-row">
+        <p>Suggested flow: click <strong>Apply Demo State</strong>, switch to Responsive, switch back to ScrollX, and confirm the toolbar state and visible rows stay consistent.</p>
+        <div class="demo-actions">
+          <button id="apply-demo-state" type="button">Apply Demo State</button>
+          <button id="reset-demo-state" type="button">Reset Demo State</button>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card">
+          <span class="label">Current Mode</span>
+          <span id="summary-mode" class="value">ScrollX</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Visible Rows</span>
+          <span id="summary-rows" class="value">0 / 0</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Column Filters</span>
+          <span id="summary-filters" class="value">0</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Visible Columns</span>
+          <span id="summary-columns" class="value">0 visible</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Order</span>
+          <span id="summary-order" class="value">None</span>
+        </div>
+        <div class="status-card">
+          <span class="label">Global Search</span>
+          <span id="summary-search" class="value">None</span>
+        </div>
+      </div>
+
+      <section class="demo-filter-panel">
+        <h3>Top Filters</h3>
+        <div id="top-filters" class="filter-grid"></div>
+      </section>
+
+      <div class="table-wrap">
+        <table id="tblTogglePreservedState" class="display nowrap" style="width:100%">
+          <tfoot>
+            <tr>
+              <th>Server</th>
+              <th>Domain</th>
+              <th>Site</th>
+              <th>Is GC</th>
+              <th>Is RO</th>
+              <th>IPv4</th>
+              <th>Largest Delta</th>
+              <th>Status</th>
+              <th>Uptime</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <section class="example-notes">
+        <h3>About this demo</h3>
+        <p>This page shows a realistic table setup where users may change filters, hide columns, sort by a metric, and then switch layout modes without losing context.</p>
+
+        <h3>Core setup</h3>
+<pre><code class="language-js">$('#tblTogglePreservedState').DataTable({
+  dom: 'Bfrtip',
+  stateSave: true,
+  responsive: false,
+  scrollX: '100%',
+  buttons: ['copyHtml5', 'csvHtml5', 'excelHtml5', 'colvis', 'toggleView'],
+  columnHighlighter: { rules: [/* status coloring */] },
+  searchHighlighter: {
+    includeColumnSearch: true,
+    minLength: 2
+  }
+});</code></pre>
+
+        <h3>What to try</h3>
+<pre><code class="language-text">1. Apply the demo state.
+2. Use the global search and top or footer filters.
+3. Hide one of the columns from the Columns menu.
+4. Switch to Responsive mode.
+5. Switch back to ScrollX and confirm the same state remains active.</code></pre>
+      </section>
+    </div>
+  </body>
+
+</html>
