@@ -61,6 +61,18 @@ jobs:
           fi
           echo "version=$VER" >> $GITHUB_OUTPUT
 
+      - name: Check cross-repo workflow token availability
+        id: token
+        shell: bash
+        env:
+          CDNHFX_WORKFLOW_TOKEN: ${{ secrets.CDNHFX_WORKFLOW_TOKEN }}
+        run: |
+          if [ -n "${CDNHFX_WORKFLOW_TOKEN}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Bump package.json version (if present)
         if: steps.ver.outputs.version != ''
         run: |
@@ -123,7 +135,7 @@ jobs:
           fi
 
       - name: Dispatch HtmlForgeX HTMLExtensions sync
-        if: steps.ver.outputs.version != '' && secrets.CDNHFX_WORKFLOW_TOKEN != ''
+        if: steps.ver.outputs.version != '' && steps.token.outputs.has_token == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.CDNHFX_WORKFLOW_TOKEN }}
@@ -136,7 +148,7 @@ jobs:
             -F inputs[version]='${{ steps.ver.outputs.version }}'
 
       - name: Warn when cross-repo workflow token is missing
-        if: steps.ver.outputs.version != '' && secrets.CDNHFX_WORKFLOW_TOKEN == ''
+        if: steps.ver.outputs.version != '' && steps.token.outputs.has_token != 'true'
         shell: bash
         run: |
           echo "::warning::CDNHFX_WORKFLOW_TOKEN is not configured, so the HtmlForgeX HTMLExtensions sync workflow was not dispatched."
