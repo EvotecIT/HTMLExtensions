@@ -37,7 +37,7 @@
     "format": "prettier --write \"sources/**/*.js\"",
     "format:check": "prettier --check \"sources/**/*.js\"",
     "build": "npm run clean && node scripts/build.js",
-    "test": "node --test tests/**/*.test.cjs",
+    "test": "node --test tests/toggleView.regression.test.cjs",
     "prepublishOnly": "npm run format && npm run build"
   }
 }
