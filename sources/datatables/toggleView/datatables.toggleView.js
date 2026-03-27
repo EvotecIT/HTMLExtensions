@@ -215,6 +215,107 @@
     }
   }
 
+  function normalizeToolbarAlign(value) {
+    switch (String(value || '').trim().toLowerCase()) {
+      case 'left':
+        return 'Left';
+      case 'right':
+        return 'Right';
+      case 'center':
+        return 'Center';
+      default:
+        return null;
+    }
+  }
+
+  function normalizeToolbarDensity(value) {
+    switch (String(value || '').trim().toLowerCase()) {
+      case 'compact':
+        return 'Compact';
+      case 'dense':
+        return 'Dense';
+      case 'default':
+        return 'Default';
+      default:
+        return null;
+    }
+  }
+
+  function captureToolbarState(api) {
+    try {
+      var $ = global.jQuery || global.$;
+      if (!$ || !api || !api.table) return null;
+
+      var $wrap = $(api.table().container());
+      if (!$wrap.length) return null;
+
+      var $bar = $wrap.find('.dt-toolbar').first();
+      var $filter = $bar.find('.dataTables_filter, .dt-search').first();
+      var buttonsAlign = normalizeToolbarAlign(
+        $wrap.attr('data-hfx-toolbar-buttons-align') ||
+          ($bar.length ? $bar.attr('data-hfx-toolbar-buttons-align') : null)
+      );
+      var filterAlign = normalizeToolbarAlign(
+        $wrap.attr('data-hfx-toolbar-filter-align') ||
+          ($bar.length ? $bar.attr('data-hfx-toolbar-filter-align') : null)
+      );
+      var density = normalizeToolbarDensity(
+        $wrap.attr('data-hfx-toolbar-density') ||
+          ($bar.length ? $bar.attr('data-hfx-toolbar-density') : null)
+      );
+
+      if (!density && $bar.length) {
+        if (
+          $bar.hasClass('hfx-dt-toolbar-density-compact') ||
+          $bar.hasClass('hfx-controlbar-density-compact')
+        ) {
+          density = 'Compact';
+        } else if (
+          $bar.hasClass('hfx-dt-toolbar-density-dense') ||
+          $bar.hasClass('hfx-controlbar-density-dense')
+        ) {
+          density = 'Dense';
+        } else if (
+          $bar.hasClass('hfx-dt-toolbar-density-default') ||
+          $bar.hasClass('hfx-controlbar-density-default')
+        ) {
+          density = 'Default';
+        }
+      }
+
+      if ((!buttonsAlign || !filterAlign) && $bar.length) {
+        var justify = String($bar.css('justify-content') || '').toLowerCase();
+        var filterMarginLeft = String($filter.length ? $filter.css('margin-left') || '' : '').toLowerCase();
+        var filterPinnedRight = filterMarginLeft === 'auto';
+
+        if (justify.indexOf('center') >= 0) {
+          buttonsAlign = buttonsAlign || 'Center';
+          filterAlign = filterAlign || 'Center';
+        } else if (justify.indexOf('flex-end') >= 0) {
+          buttonsAlign = buttonsAlign || 'Right';
+          filterAlign = filterAlign || 'Right';
+        } else if (justify.indexOf('flex-start') >= 0) {
+          buttonsAlign = buttonsAlign || 'Left';
+          filterAlign = filterAlign || 'Left';
+        } else if (filterPinnedRight) {
+          buttonsAlign = buttonsAlign || 'Left';
+          filterAlign = filterAlign || 'Right';
+        } else {
+          buttonsAlign = buttonsAlign || 'Right';
+          filterAlign = filterAlign || 'Left';
+        }
+      }
+
+      return {
+        buttonsAlign: buttonsAlign,
+        filterAlign: filterAlign,
+        density: density,
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
   function cleanupScrollArtifacts(table) {
     try {
       var $ = global.jQuery || global.$;
@@ -592,6 +693,7 @@
     var st = api.settings ? api.settings()[0] : null;
     var modeBefore = detectMode(api, init);
     var hadScrollWrapper = hasScrollWrapper(api);
+    var toolbarState = captureToolbarState(api);
     var hadHeaderFilters = false;
     var hadFooterFilters = false;
     try {
@@ -643,7 +745,12 @@
 
     try {
       if (global.hfxDt) {
-        global.hfxDt.applyViewportAndToolbar(newApi);
+        global.hfxDt.applyViewportAndToolbar(
+          newApi,
+          toolbarState && toolbarState.buttonsAlign,
+          toolbarState && toolbarState.filterAlign,
+          toolbarState && toolbarState.density
+        );
       }
     } catch (_) {}
     if (table && table.id && (hadHeaderFilters || hadFooterFilters)) {
