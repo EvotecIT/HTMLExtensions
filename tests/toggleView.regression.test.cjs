@@ -28,6 +28,7 @@ function createFixtureHtml() {
         selectedRowsCalls: 0,
         selectedColumnsCalls: 0,
         selectedCellsCalls: 0,
+        toolbarApplyCalls: [],
         initialMode: null,
         afterFirstMode: null,
         afterSecondMode: null,
@@ -37,6 +38,8 @@ function createFixtureHtml() {
         columnSearchAfterSecond: null,
         orderAfterFirst: null,
         orderAfterSecond: null,
+        toolbarStateAfterFirst: null,
+        toolbarStateAfterSecond: null,
         hasSelectExtension: null,
         error: null,
         done: false
@@ -80,6 +83,29 @@ function createFixtureHtml() {
 
       $(function () {
         try {
+          window.hfxDt = {
+            applyViewportAndToolbar: function (api, buttonsAlign, filterAlign, density) {
+              var snapshot = {
+                buttonsAlign: buttonsAlign || null,
+                filterAlign: filterAlign || null,
+                density: density || null
+              };
+
+              window.__toggleMetrics.toolbarApplyCalls.push(snapshot);
+
+              try {
+                var $wrap = $(api.table().container());
+                var $table = $(api.table().node());
+                $wrap.attr('data-hfx-toolbar-buttons-align', snapshot.buttonsAlign || '');
+                $wrap.attr('data-hfx-toolbar-filter-align', snapshot.filterAlign || '');
+                $wrap.attr('data-hfx-toolbar-density', snapshot.density || '');
+                $table.attr('data-hfx-toolbar-buttons-align', snapshot.buttonsAlign || '');
+                $table.attr('data-hfx-toolbar-filter-align', snapshot.filterAlign || '');
+                $table.attr('data-hfx-toolbar-density', snapshot.density || '');
+              } catch (_) {}
+            }
+          };
+
           var rows = [];
           for (var index = 0; index < 600; index++) {
             rows.push({
@@ -109,6 +135,15 @@ function createFixtureHtml() {
 
           window.__toggleMetrics.initialMode = window.hfxToggleViewMode(api, api.init());
 
+          var $initialWrap = $(api.table().container());
+          var $initialTable = $(api.table().node());
+          $initialWrap.attr('data-hfx-toolbar-buttons-align', 'Left');
+          $initialWrap.attr('data-hfx-toolbar-filter-align', 'Right');
+          $initialWrap.attr('data-hfx-toolbar-density', 'Dense');
+          $initialTable.attr('data-hfx-toolbar-buttons-align', 'Left');
+          $initialTable.attr('data-hfx-toolbar-filter-align', 'Right');
+          $initialTable.attr('data-hfx-toolbar-density', 'Dense');
+
           api.search('srv-1');
           api.column(2).search('Berlin');
           api.order([[3, 'desc']]).draw();
@@ -118,12 +153,22 @@ function createFixtureHtml() {
           window.__toggleMetrics.searchAfterFirst = firstToggle.search();
           window.__toggleMetrics.columnSearchAfterFirst = firstToggle.column(2).search();
           window.__toggleMetrics.orderAfterFirst = firstToggle.order();
+          window.__toggleMetrics.toolbarStateAfterFirst = {
+            buttonsAlign: $(firstToggle.table().container()).attr('data-hfx-toolbar-buttons-align') || null,
+            filterAlign: $(firstToggle.table().container()).attr('data-hfx-toolbar-filter-align') || null,
+            density: $(firstToggle.table().container()).attr('data-hfx-toolbar-density') || null
+          };
 
           var secondToggle = window.hfxToggleView(firstToggle);
           window.__toggleMetrics.afterSecondMode = window.hfxToggleViewMode(secondToggle, secondToggle.init());
           window.__toggleMetrics.searchAfterSecond = secondToggle.search();
           window.__toggleMetrics.columnSearchAfterSecond = secondToggle.column(2).search();
           window.__toggleMetrics.orderAfterSecond = secondToggle.order();
+          window.__toggleMetrics.toolbarStateAfterSecond = {
+            buttonsAlign: $(secondToggle.table().container()).attr('data-hfx-toolbar-buttons-align') || null,
+            filterAlign: $(secondToggle.table().container()).attr('data-hfx-toolbar-filter-align') || null,
+            density: $(secondToggle.table().container()).attr('data-hfx-toolbar-density') || null
+          };
           window.__toggleMetrics.hasSelectExtension = !!(
             secondToggle.settings &&
             secondToggle.settings()[0] &&
@@ -230,6 +275,20 @@ test('toggleView skips selection preservation work for non-select tables', async
     assert.equal(metrics.selectedRowsCalls, 0);
     assert.equal(metrics.selectedColumnsCalls, 0);
     assert.equal(metrics.selectedCellsCalls, 0);
+    assert.deepEqual(metrics.toolbarApplyCalls, [
+      { buttonsAlign: 'Left', filterAlign: 'Right', density: 'Dense' },
+      { buttonsAlign: 'Left', filterAlign: 'Right', density: 'Dense' }
+    ]);
+    assert.deepEqual(metrics.toolbarStateAfterFirst, {
+      buttonsAlign: 'Left',
+      filterAlign: 'Right',
+      density: 'Dense'
+    });
+    assert.deepEqual(metrics.toolbarStateAfterSecond, {
+      buttonsAlign: 'Left',
+      filterAlign: 'Right',
+      density: 'Dense'
+    });
 
     assert.deepEqual(pageErrors, []);
     assert.deepEqual(consoleErrors, []);
