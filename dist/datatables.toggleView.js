@@ -1,7 +1,7 @@
 /*!
- HTMLExtensions v0.1.18 — DataTables ColumnHighlighter & ToggleView
+ HTMLExtensions v0.1.19 — DataTables ColumnHighlighter & ToggleView
  (c) 2011–2026 Przemyslaw Klys @ Evotec
- https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-27T18:48:11.407Z
+ https://htmlextensions.evotec.xyz | MIT License | Build: 2026-03-27T19:01:37.547Z
 */
 
 (function (global) {
@@ -222,7 +222,11 @@
   }
 
   function normalizeToolbarAlign(value) {
-    switch (String(value || '').trim().toLowerCase()) {
+    switch (
+      String(value || '')
+        .trim()
+        .toLowerCase()
+    ) {
       case 'left':
         return 'Left';
       case 'right':
@@ -235,7 +239,11 @@
   }
 
   function normalizeToolbarDensity(value) {
-    switch (String(value || '').trim().toLowerCase()) {
+    switch (
+      String(value || '')
+        .trim()
+        .toLowerCase()
+    ) {
       case 'compact':
         return 'Compact';
       case 'dense':
@@ -266,8 +274,7 @@
           ($bar.length ? $bar.attr('data-hfx-toolbar-filter-align') : null)
       );
       var density = normalizeToolbarDensity(
-        $wrap.attr('data-hfx-toolbar-density') ||
-          ($bar.length ? $bar.attr('data-hfx-toolbar-density') : null)
+        $wrap.attr('data-hfx-toolbar-density') || ($bar.length ? $bar.attr('data-hfx-toolbar-density') : null)
       );
 
       if (!density && $bar.length) {
