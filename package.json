@@ -26,6 +26,7 @@
     "access": "public"
   },
   "devDependencies": {
+    "playwright": "^1.53.2",
     "terser": "^5.44.0",
     "prettier": "^3.3.3",
     "rimraf": "^5.0.5",
@@ -36,6 +37,7 @@
     "format": "prettier --write \"sources/**/*.js\"",
     "format:check": "prettier --check \"sources/**/*.js\"",
     "build": "npm run clean && node scripts/build.js",
+    "test": "node --test tests/toggleView.regression.test.cjs",
     "prepublishOnly": "npm run format && npm run build"
   }
 }
