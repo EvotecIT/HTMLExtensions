@@ -1,6 +1,12 @@
 (function (global) {
   if (global.hfxToggleView) return;
 
+  function isPlainObject(value) {
+    if (!value || Object.prototype.toString.call(value) !== '[object Object]') return false;
+    var proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+  }
+
   function deepClone(obj) {
     var $ = global.jQuery || global.$;
     if ($ && $.extend) return $.extend(true, Array.isArray(obj) ? [] : {}, obj);
@@ -8,6 +14,51 @@
       return JSON.parse(JSON.stringify(obj));
     } catch (e) {
       return obj;
+    }
+  }
+
+  function cloneInitValue(value, key, seen) {
+    if (value == null) return value;
+
+    var type = typeof value;
+    if (type !== 'object') return value;
+    if (type === 'function') return value;
+
+    // Keep the original row data reference so a view toggle does not deep-clone
+    // the full dataset before DataTables even starts rebuilding the table.
+    if (key === 'data' || key === 'aaData') return value;
+
+    if (value === global || value === global.document || value.nodeType) return value;
+    if (value.jquery) return value;
+
+    if (seen.has(value)) return seen.get(value);
+
+    if (Array.isArray(value)) {
+      var arr = new Array(value.length);
+      seen.set(value, arr);
+      for (var i = 0; i < value.length; i++) {
+        arr[i] = cloneInitValue(value[i], '', seen);
+      }
+      return arr;
+    }
+
+    if (!isPlainObject(value)) return value;
+
+    var clone = {};
+    seen.set(value, clone);
+    var keys = Object.keys(value);
+    for (var j = 0; j < keys.length; j++) {
+      var childKey = keys[j];
+      clone[childKey] = cloneInitValue(value[childKey], childKey, seen);
+    }
+    return clone;
+  }
+
+  function cloneInitForToggle(obj) {
+    try {
+      return cloneInitValue(obj, '', new WeakMap());
+    } catch (_) {
+      return deepClone(obj);
     }
   }
 
@@ -108,9 +159,10 @@
       if (!table) return null;
 
       var $table = $(table);
-      var inCloneSection = $table.closest(
-        'div.dt-scroll-head,div.dataTables_scrollHead,div.dt-scroll-foot,div.dataTables_scrollFoot'
-      ).length > 0;
+      var inCloneSection =
+        $table.closest(
+          'div.dt-scroll-head,div.dataTables_scrollHead,div.dt-scroll-foot,div.dataTables_scrollFoot'
+        ).length > 0;
 
       if (inCloneSection || !table.id || /^DataTables_Table_/i.test(table.id)) {
         var $scroll = $table.closest('div.dt-scroll,div.dataTables_scroll');
@@ -149,6 +201,15 @@
       var table = resolveCanonicalTableNode(api);
       if (!table) return false;
       return $(table).closest('div.dt-scroll-body,div.dataTables_scrollBody').length > 0;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function hasSelectExtension(api) {
+    try {
+      var st = api && api.settings ? api.settings()[0] : null;
+      return !!(api && api.select && st && st._select);
     } catch (_) {
       return false;
     }
@@ -245,41 +306,48 @@
     try {
       var info = api.page && api.page.info ? api.page.info() : null;
       var dtState = api.state && typeof api.state === 'function' ? api.state() : null;
+      var canPreserveSelections = hasSelectExtension(api);
       state.page = api.page();
       state.pageLen = api.page && api.page.len ? api.page.len() : null;
       state.start = info && typeof info.start === 'number' ? info.start : null;
       state.order = api.order();
       state.search = api.search();
-      state.dataTablesState = dtState ? deepClone(dtState) : null;
       state.colSearch = [];
       state.colVisible = [];
       api.columns().every(function (idx) {
         state.colSearch[idx] = this.search();
         state.colVisible[idx] = this.visible();
       });
-      try {
-        state.selectedRowIds =
-          api.rows && api.rows({ selected: true }).ids
-            ? deepClone(api.rows({ selected: true }).ids().toArray())
+      if (canPreserveSelections) {
+        try {
+          state.selectedRowIds =
+            api.rows && api.rows({ selected: true }).ids
+              ? deepClone(api.rows({ selected: true }).ids().toArray())
+              : [];
+        } catch (_) {
+          state.selectedRowIds = [];
+        }
+        try {
+          state.selectedRows = api.rows ? deepClone(api.rows({ selected: true }).indexes().toArray()) : [];
+        } catch (_) {
+          state.selectedRows = [];
+        }
+        try {
+          state.selectedColumns = api.columns
+            ? deepClone(api.columns({ selected: true }).indexes().toArray())
             : [];
-      } catch (_) {
+        } catch (_) {
+          state.selectedColumns = [];
+        }
+        try {
+          state.selectedCells = api.cells ? deepClone(api.cells({ selected: true }).indexes().toArray()) : [];
+        } catch (_) {
+          state.selectedCells = [];
+        }
+      } else {
         state.selectedRowIds = [];
-      }
-      try {
-        state.selectedRows = api.rows ? deepClone(api.rows({ selected: true }).indexes().toArray()) : [];
-      } catch (_) {
         state.selectedRows = [];
-      }
-      try {
-        state.selectedColumns = api.columns
-          ? deepClone(api.columns({ selected: true }).indexes().toArray())
-          : [];
-      } catch (_) {
         state.selectedColumns = [];
-      }
-      try {
-        state.selectedCells = api.cells ? deepClone(api.cells({ selected: true }).indexes().toArray()) : [];
-      } catch (_) {
         state.selectedCells = [];
       }
       try {
@@ -335,13 +403,11 @@
   }
 
   function restoreExtensionState(api, state) {
+    var canRestoreSelections = hasSelectExtension(api);
+
     try {
       if (!state) return;
-      if (
-        Array.isArray(state.colReorder) &&
-        api.colReorder &&
-        typeof api.colReorder.order === 'function'
-      ) {
+      if (Array.isArray(state.colReorder) && api.colReorder && typeof api.colReorder.order === 'function') {
         api.colReorder.order(state.colReorder, true);
       }
     } catch (_) {}
@@ -359,6 +425,7 @@
     } catch (_) {}
 
     try {
+      if (!canRestoreSelections) return;
       var selectedRowIds = Array.isArray(state.selectedRowIds)
         ? state.selectedRowIds.filter(function (id) {
             return !!id && id !== '#undefined' && id !== 'undefined';
@@ -486,13 +553,18 @@
       try {
         api = $table.DataTable();
       } catch (_) {}
-      var container = api && api.table ? $(api.table().container()) : $table.closest('.dt-container, .dataTables_wrapper');
+      var container =
+        api && api.table ? $(api.table().container()) : $table.closest('.dt-container, .dataTables_wrapper');
       var headerReady =
         !includeHeader ||
-        container.find('div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input,thead tr.hfx-header-filter input.hfx-dt-column-filter-input').length > 0;
+        container.find(
+          'div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input,thead tr.hfx-header-filter input.hfx-dt-column-filter-input'
+        ).length > 0;
       var footerReady =
         !includeFooter ||
-        container.find('div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input,tfoot tr.hfx-footer-filter input.hfx-dt-column-filter-input').length > 0;
+        container.find(
+          'div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input,tfoot tr.hfx-footer-filter input.hfx-dt-column-filter-input'
+        ).length > 0;
 
       if ((!headerReady || !footerReady) && (attempt || 0) < 6) {
         setTimeout(function () {
@@ -516,7 +588,7 @@
     api = resolveCanonicalApi(api);
     var table = resolveCanonicalTableNode(api);
     var id = table && table.id ? table.id : null;
-    var init = deepClone(api.init ? api.init() : {});
+    var init = cloneInitForToggle(api.init ? api.init() : {});
     var st = api.settings ? api.settings()[0] : null;
     var modeBefore = detectMode(api, init);
     var hadScrollWrapper = hasScrollWrapper(api);
@@ -526,10 +598,14 @@
       var $container = $(api.table().container());
       hadHeaderFilters =
         $container.find('tr.hfx-header-filter').length > 0 ||
-        $container.find('div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input').length > 0;
+        $container.find(
+          'div.dt-scroll-head input.hfx-dt-column-filter-input,div.dataTables_scrollHead input.hfx-dt-column-filter-input'
+        ).length > 0;
       hadFooterFilters =
         $container.find('tr.hfx-footer-filter').length > 0 ||
-        $container.find('div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input').length > 0;
+        $container.find(
+          'div.dt-scroll-foot input.hfx-dt-column-filter-input,div.dataTables_scrollFoot input.hfx-dt-column-filter-input'
+        ).length > 0;
     } catch (_) {}
     var state = preserveState(api);
     var responsiveCfg = resolveResponsiveConfig(init, st);
