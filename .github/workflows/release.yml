@@ -121,3 +121,22 @@ jobs:
           else
             echo "package.json missing; skipping npm publish."
           fi
+
+      - name: Dispatch HtmlForgeX HTMLExtensions sync
+        if: steps.ver.outputs.version != '' && secrets.CDNHFX_WORKFLOW_TOKEN != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.CDNHFX_WORKFLOW_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api \
+            --method POST \
+            repos/EvotecIT/HtmlForgeX/actions/workflows/sync-htmlextensions.yml/dispatches \
+            -f ref=master \
+            -F inputs[version]='${{ steps.ver.outputs.version }}'
+
+      - name: Warn when cross-repo workflow token is missing
+        if: steps.ver.outputs.version != '' && secrets.CDNHFX_WORKFLOW_TOKEN == ''
+        shell: bash
+        run: |
+          echo "::warning::CDNHFX_WORKFLOW_TOKEN is not configured, so the HtmlForgeX HTMLExtensions sync workflow was not dispatched."
