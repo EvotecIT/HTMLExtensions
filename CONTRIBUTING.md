@@ -34,7 +34,7 @@ Thanks for improving HTMLExtensions. This repo ships small client‑side helpers
 
 ## Build Locally
 
-From `Ignore/HtmlExtensions`:
+From the repository root:
 
 ```
 npm ci
@@ -43,6 +43,23 @@ npm run build
 ```
 
 Outputs go to `dist/` and include both readable and minified files.
+
+## Browser Regression Tests
+
+Install the .NET 8 SDK as well as Node.js, then run:
+
+```sh
+npm ci
+npm run build
+npm test
+```
+
+The Node.js tests keep the extension assertions in JavaScript and use the test-only
+HtmlTinkerX runner to install Chromium, open browser sessions, and collect results.
+They exercise the toggle workflow at desktop and compact viewport sizes. Linux
+environments that need browser system libraries can run the installation step with
+`HTMLTINKERX_PLAYWRIGHT_WITH_DEPS=true`, as the test workflow does. These tools are
+development requirements; the published npm package contains only `dist/`.
 
 ## Publishing
 

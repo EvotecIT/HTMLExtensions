@@ -26,11 +26,10 @@
     "access": "public"
   },
   "devDependencies": {
-    "playwright": "^1.53.2",
-    "terser": "^5.44.0",
+    "clean-css": "^5.3.3",
     "prettier": "^3.3.3",
     "rimraf": "^6.1.3",
-    "clean-css": "^5.3.3"
+    "terser": "^5.44.0"
   },
   "scripts": {
     "clean": "rimraf dist",
