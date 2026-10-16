@@ -20,14 +20,21 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build dist
         run: npm run build
 
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
+      - name: Install browser through HtmlTinkerX
+        env:
+          HTMLTINKERX_PLAYWRIGHT_WITH_DEPS: 'true'
+        run: dotnet run --project tests/browser/HTMLExtensions.Browser.csproj --configuration Release -- --install
 
       - name: Run regression tests
         run: npm test

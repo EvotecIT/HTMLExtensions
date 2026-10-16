@@ -1,3 +1,5 @@
 ﻿# keep dist tracked when created by CI
 !dist/
 node_modules/
+tests/browser/bin/
+tests/browser/obj/

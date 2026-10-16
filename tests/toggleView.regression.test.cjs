@@ -3,8 +3,11 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const path = require('node:path');
 const fs = require('node:fs/promises');
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
 
-const { chromium } = require('playwright');
+const runFile = promisify(execFile);
+const browserProject = path.join(__dirname, 'browser', 'HTMLExtensions.Browser.csproj');
 
 const distRoot = path.join(__dirname, '..', 'dist');
 const toggleViewScriptPath = path.join(distRoot, 'datatables.toggleView.js');
@@ -229,72 +232,58 @@ async function startServer() {
   };
 }
 
-test('toggleView skips selection preservation work for non-select tables', async () => {
-  const server = await startServer();
-  const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
-  const pageErrors = [];
-  const consoleErrors = [];
+for (const [width, height] of [[1280, 800], [390, 640]]) {
+  test(`toggleView skips selection preservation work for non-select tables at ${width}x${height}`, async () => {
+    const server = await startServer();
 
-  page.on('pageerror', error => {
-    pageErrors.push(String(error));
-  });
+    try {
+      const { stdout } = await runFile('dotnet', [
+        'run', '--project', browserProject, '--configuration', 'Release', '--verbosity', 'quiet', '--',
+        `${server.baseUrl}/toggleView-regression.html`, String(width), String(height)
+      ], {
+        timeout: 120000,
+        maxBuffer: 10 * 1024 * 1024
+      });
+      const resultLine = stdout.split(/\r?\n/).find(line => line.startsWith('HTMLEXTENSIONS_RESULT:'));
+      assert.ok(resultLine, `Browser runner did not return metrics: ${stdout}`);
+      const { metrics, pageErrors, consoleErrors } = JSON.parse(resultLine.slice('HTMLEXTENSIONS_RESULT:'.length));
 
-  page.on('console', message => {
-    if (message.type() === 'error') {
-      consoleErrors.push(message.text());
+      assert.equal(metrics.error, null);
+      assert.equal(metrics.hasSelectExtension, false);
+
+      assert.equal(metrics.initialMode, 'ScrollX');
+      assert.equal(metrics.afterFirstMode, 'Responsive');
+      assert.equal(metrics.afterSecondMode, 'ScrollX');
+
+      assert.equal(metrics.searchAfterFirst, 'srv-1');
+      assert.equal(metrics.searchAfterSecond, 'srv-1');
+      assert.equal(metrics.columnSearchAfterFirst, 'Berlin');
+      assert.equal(metrics.columnSearchAfterSecond, 'Berlin');
+      assert.deepEqual(metrics.orderAfterFirst, [[3, 'desc']]);
+      assert.deepEqual(metrics.orderAfterSecond, [[3, 'desc']]);
+
+      assert.equal(metrics.selectedRowsCalls, 0);
+      assert.equal(metrics.selectedColumnsCalls, 0);
+      assert.equal(metrics.selectedCellsCalls, 0);
+      assert.deepEqual(metrics.toolbarApplyCalls, [
+        { buttonsAlign: 'Left', filterAlign: 'Right', density: 'Dense' },
+        { buttonsAlign: 'Left', filterAlign: 'Right', density: 'Dense' }
+      ]);
+      assert.deepEqual(metrics.toolbarStateAfterFirst, {
+        buttonsAlign: 'Left',
+        filterAlign: 'Right',
+        density: 'Dense'
+      });
+      assert.deepEqual(metrics.toolbarStateAfterSecond, {
+        buttonsAlign: 'Left',
+        filterAlign: 'Right',
+        density: 'Dense'
+      });
+
+      assert.deepEqual(pageErrors, []);
+      assert.deepEqual(consoleErrors, []);
+    } finally {
+      await server.close();
     }
   });
-
-  try {
-    await page.goto(`${server.baseUrl}/toggleView-regression.html`, {
-      waitUntil: 'networkidle',
-      timeout: 30000
-    });
-
-    await page.waitForFunction(() => window.__toggleMetrics && window.__toggleMetrics.done === true, {
-      timeout: 30000
-    });
-
-    const metrics = await page.evaluate(() => window.__toggleMetrics);
-
-    assert.equal(metrics.error, null);
-    assert.equal(metrics.hasSelectExtension, false);
-
-    assert.equal(metrics.initialMode, 'ScrollX');
-    assert.equal(metrics.afterFirstMode, 'Responsive');
-    assert.equal(metrics.afterSecondMode, 'ScrollX');
-
-    assert.equal(metrics.searchAfterFirst, 'srv-1');
-    assert.equal(metrics.searchAfterSecond, 'srv-1');
-    assert.equal(metrics.columnSearchAfterFirst, 'Berlin');
-    assert.equal(metrics.columnSearchAfterSecond, 'Berlin');
-    assert.deepEqual(metrics.orderAfterFirst, [[3, 'desc']]);
-    assert.deepEqual(metrics.orderAfterSecond, [[3, 'desc']]);
-
-    assert.equal(metrics.selectedRowsCalls, 0);
-    assert.equal(metrics.selectedColumnsCalls, 0);
-    assert.equal(metrics.selectedCellsCalls, 0);
-    assert.deepEqual(metrics.toolbarApplyCalls, [
-      { buttonsAlign: 'Left', filterAlign: 'Right', density: 'Dense' },
-      { buttonsAlign: 'Left', filterAlign: 'Right', density: 'Dense' }
-    ]);
-    assert.deepEqual(metrics.toolbarStateAfterFirst, {
-      buttonsAlign: 'Left',
-      filterAlign: 'Right',
-      density: 'Dense'
-    });
-    assert.deepEqual(metrics.toolbarStateAfterSecond, {
-      buttonsAlign: 'Left',
-      filterAlign: 'Right',
-      density: 'Dense'
-    });
-
-    assert.deepEqual(pageErrors, []);
-    assert.deepEqual(consoleErrors, []);
-  } finally {
-    await page.close();
-    await browser.close();
-    await server.close();
-  }
-});
+}
