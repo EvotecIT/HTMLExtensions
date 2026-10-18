@@ -1,0 +1,21 @@
+{
+  "name": "HTMLExtensions examples",
+  "description": "Agent-facing discovery metadata for HTMLExtensions examples.",
+  "url": "https://htmlextensions.evotec.xyz",
+  "resources": {
+    "robots": "https://htmlextensions.evotec.xyz/robots.txt",
+    "sitemap": "https://htmlextensions.evotec.xyz/sitemap.xml",
+    "llms": "https://htmlextensions.evotec.xyz/llms.txt",
+    "apiCatalog": null,
+    "agentSkills": "https://htmlextensions.evotec.xyz/.well-known/agent-skills/index.json",
+    "mcpServerCard": null,
+    "a2aAgentCard": null
+  },
+  "capabilities": {
+    "contentNegotiation": null,
+    "markdownArtifacts": false,
+    "contentSignals": true,
+    "webMcp": false,
+    "webMcpTools": []
+  }
+}
