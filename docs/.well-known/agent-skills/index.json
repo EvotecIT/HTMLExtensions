@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "site-assistant",
+      "type": "skill-md",
+      "description": "Use the examples gallery and project documentation.",
+      "url": "/.well-known/agent-skills/site-assistant/SKILL.md",
+      "digest": "sha256:d5ba1a3d41a6fca3f27a2a12b989b92f99f17de3c348e9a070da91bb4f696f11"
+    }
+  ]
+}
