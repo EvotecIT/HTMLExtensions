@@ -40,6 +40,7 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: docs   # <<< publish only the site folder
+          include-hidden-files: true
 
   deploy:
     needs: build
